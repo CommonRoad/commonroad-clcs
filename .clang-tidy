@@ -1,0 +1,51 @@
+---
+Checks:          '-*,
+                  performance-*,
+                  ccpcoreguidelines-*,
+                  modernize-*,
+                  -modernize-avoid-c-arrays,
+                  -modernize-use-nodiscard,
+                  -modernize-use-noexcept,
+                  -modernize-use-using,
+                  -modernize-use-trailing-return-type,
+                  readability-*,
+                  -readability-else-after-return,
+                  -readability-braces-around-statements,
+                  -readability-magic-numbers,
+                  -readability-named-parameter,
+                  -readability-uppercase-literal-suffix,
+                  -readability-isolate-declaration,
+                  -readability-identifier-naming,
+                  -readability-function-size'
+HeaderFilterRegex: 'elsa/elsa'
+AnalyzeTemporaryDtors: false
+CheckOptions:
+  - key:             llvm-namespace-comment.ShortNamespaceLines
+    value:           '10'
+  - key:             llvm-namespace-comment.SpacesBeforeComments
+    value:           '2'
+  # type names
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.UnionCase
+    value:           CamelCase
+  # method names
+  - key:             readability-identifier-naming.MethodCase
+    value:           camelBack
+  # variable names
+  - key:             readability-identifier-naming.VariableCase
+    value:           camelBack
+  - key:             readability-identifier-naming.ParameterCase
+    value:           camelBack
+  - key:             readability-identifier-naming.MemberPrefix
+    value:           _
+  # const static or global variables are UPPER_CASE
+  - key:             readability-identifier-naming.EnumConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.StaticConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ClassConstantCase
+    value:           UPPER_CASE
+...
