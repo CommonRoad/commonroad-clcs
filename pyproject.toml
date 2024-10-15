@@ -7,13 +7,15 @@ license = { file = "LICENSE.txt" }
 authors = [
     { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
 ]
-description = "Curvilinear (Frenet) Coordinate System for motion planning on CommonRoad scenarios"
+description = "Curvilinear (Frenet) Coordinate System for motion planning."
 keywords = [
     "autonomous vehicles",
     "automated driving",
     "motion planning",
     "frenet coordinates",
+    "commonroad"
 ]
+
 dependencies = [
     "commonroad-io>=2023.1",
     "commonroad-route-planner>=2024.2.0, <2025.0",
