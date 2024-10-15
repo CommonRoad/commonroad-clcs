@@ -1,0 +1,85 @@
+[project]
+name = "commonroad-clcs"
+version = "2024.1.0"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.9,<3.12"
+license = { file = "LICENSE.txt" }
+authors = [
+    { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
+]
+description = "Curvilinear (Frenet) Coordinate System for motion planning on CommonRoad scenarios"
+keywords = [
+    "autonomous vehicles",
+    "automated driving",
+    "motion planning",
+    "frenet coordinates",
+]
+dependencies = [
+    "commonroad-io>=2023.1",
+    "commonroad-route-planner>=2024.2.0, <2025.0",
+    "matplotlib>=3.3.3",
+    "numpy>=1.19.2",
+    "omegaconf>=2.1.1",
+    "scipy>=1.4.1",
+    "shapely>=2.0.0",
+]
+
+classifiers = [
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.urls]
+Homepage = "https://commonroad.in.tum.de/tools/commonroad-clcs"
+Documentation = "https://commonroad.in.tum.de/docs/commonroad-clcs/"
+Source = "https://github.com/CommonRoad/commonroad-curvilinear-coordinate-system"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=3.8.0",
+]
+docs = [
+    "sphinx>=4.5.0",
+    "sphinx-autodoc-typehints>=1.18.1",
+    "sphinx-rtd-theme>=2.0.0",
+    "m2r2>=0.3.0",
+]
+build = [
+    "scikit-build-core~=0.8.0",
+    "pybind11>=2.12.0",
+    "pathspec>=0.12.1",
+    "pyproject-metadata>=0.7.1",
+    "cmake>=3.24",
+]
+
+[build-system]
+requires = [
+    "scikit-build-core~=0.8.0",
+    "pybind11>=2.12.0",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.packages = ["commonroad_clcs"]
+build-dir = "build/{build_type}_{wheel_tag}"
+install.components = ["pycrccosy"]
+
+minimum-version = "0.8"
+cmake.version = ">=3.24"
+
+[tool.cibuildwheel]
+# Skip PyPy
+skip = "pp*"
+archs = ["auto"]
+environment = { PIP_DISABLE_PIP_VERSION_CHECK = "1" }
+build-verbosity = 1
+
+# Skip tests on musllinux due to missing wheels
+test-skip = "*i686 *-musllinux*"
+test-extras = ["test"]
+# use --import-mode=append to test the installed package and not the source
+test-command = "python -m pytest {package}/tests --import-mode append"
