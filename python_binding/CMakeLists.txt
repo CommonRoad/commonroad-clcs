@@ -6,12 +6,12 @@ if(SKBUILD)
         # If we are building all dependencies ourselves, then they should
         # all be static.
 
-        ensure_all_static(crreach)
+        ensure_all_static(crccosy)
     else()
-        # If we are partially using system libraries, then only the crreach library
+        # If we are partially using system libraries, then only the crccosy library
         # itself has to be static.
 
-        ensure_static(crreach)
+        ensure_static(crccosy)
     endif()
 endif()
 

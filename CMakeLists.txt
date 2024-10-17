@@ -248,7 +248,7 @@ if(CR_CLCS_SYSTEM_PACKAGES_FORCE)
 
     message(WARNING "CR_CLCS_SYSTEM_PACKAGES_FORCE is set - trying to satisfy "
             "all dependencies using installed system packages.\n"
-            "If this fails, consider disabling CRREACH_SYSTEM_PACKAGES_FORCE and "
+            "If this fails, consider disabling CR_CLCS_SYSTEM_PACKAGES_FORCE and "
             "trying again.")
 
     find_package(Eigen3 3.3.7 REQUIRED)
