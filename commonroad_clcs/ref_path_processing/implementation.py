@@ -1,7 +1,7 @@
 # standard imports
 from typing import Optional
 
-# third pary
+# third party
 import numpy as np
 
 from .processor import IReferencePathProcessor
