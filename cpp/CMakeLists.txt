@@ -61,17 +61,31 @@ target_include_directories(crccosy
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/cpp/include>
 )
 
+# link OpenMP
 target_link_libraries(crccosy
         PRIVATE
         OpenMP::OpenMP_CXX
 )
 
-# TODO Link with libs11n
+# link Eigen and Boost
 target_link_libraries(crccosy
         PUBLIC
         Eigen3::Eigen
         Boost::headers
 )
+
+# link libs11n
+if(NOT CR_CLCS_BUILD_S11N)
+    message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been DISABLED for crccosy")
+    target_compile_definitions(crccosy PRIVATE -DENABLE_SERIALIZER=0)
+else()
+    message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been ENABLED for crccosy")
+    target_link_libraries(crccosy
+            PUBLIC
+            s11n::s11n
+    )
+    target_compile_definitions(crccosy PRIVATE -DENABLE_SERIALIZER=1)
+endif()
 
 add_library(CommonRoadCLCS::crccosy ALIAS crccosy)
 

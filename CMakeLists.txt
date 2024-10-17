@@ -156,6 +156,12 @@ option(CR_CLCS_BUILD_PYTHON_BINDINGS
         "Build Python bindings"
         ${CR_CLCS_BUILD_EXTRAS_DEFAULT})
 
+# Build S11n for serialization
+option(CR_CLCS_BUILD_S11N
+        "Enable serialization support using libs11n"
+        ${CR_CLCS_BUILD_EXTRAS_DEFAULT}
+)
+
 # Build as shared library
 option(BUILD_SHARED_LIBS "Build commonroad CLCS as a shared library" ON)
 option(CR_CLCS_BUILD_SHARED_LIBS "Build using shared libraries" ${BUILD_SHARED_LIBS})
@@ -234,7 +240,6 @@ if(CMAKE_SUPPORTS_TRY_FIND_PACKAGE)
 endif()
 
 # Include Eigen3
-# TODO How to include libs11n
 if(CR_CLCS_SYSTEM_PACKAGES_FORCE)
     # This is the fallback branch in case the CMake version is older than 3.24
     # and the user requested we try to use system packages
@@ -251,14 +256,18 @@ else()
     # Normal path: We try to use find_package via FetchContent, otherwise we fall
     # back to normal FetchContent
 
-    include(ExternalEigen)
+    include(third_party/external_eigen.cmake)
+endif()
+
+# Add third party subdirectory for building libs11n
+if(CR_CLCS_BUILD_S11N)
+    add_subdirectory(third_party/libs11n)
 endif()
 
 # Add subdirectory for the main library
 add_subdirectory(cpp)
 
 # Add subdirectory for the Python bindings
-# TODO move python binding to top-level directory
 if(CR_CLCS_BUILD_PYTHON_BINDINGS)
     add_subdirectory(python_binding)
 endif()

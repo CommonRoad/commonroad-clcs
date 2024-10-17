@@ -20,7 +20,7 @@ if(SKBUILD)
     find_package(pybind11 2.7.0 QUIET)
     message(STATUS "The project is built using scikit-build")
 else()
-    include(ExternalPybind)
+    include(../third_party/external_pybind11.cmake)
     message(STATUS "Adding Python interface for compilation only")
 endif()
 
@@ -34,6 +34,8 @@ set_property(TARGET crccosy_python PROPERTY POSITION_INDEPENDENT_CODE ON)
 if(SKBUILD)
     set(python_module_name pycrccosy)
     pybind11_add_module(${python_module_name} MODULE $<TARGET_OBJECTS:crccosy_python>)
+
+    target_compile_definitions(pycrccosy PRIVATE -DPY_WRAPPER_MODULE_GEOMETRY=1)
 
     target_link_libraries(${python_module_name} PRIVATE crccosy)
 
