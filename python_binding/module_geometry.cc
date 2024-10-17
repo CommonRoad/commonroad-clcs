@@ -12,14 +12,11 @@
 
 namespace py = pybind11;
 
-#ifdef PY_WRAPPER_MODULE_GEOMETRY
 void init_module_geometry(py::module &m);
-#endif
 
 using RowMatrixXd = geometry::RowMatrixXd;
 
 PYBIND11_MODULE(pycrccosy, m) {
-#ifdef PY_WRAPPER_MODULE_GEOMETRY
   init_module_geometry(m);
 
   py::module mutil_geom = m.def_submodule(
@@ -92,7 +89,6 @@ PYBIND11_MODULE(pycrccosy, m) {
                  "\n\n:return: Tuple with boolean for intersection and intersection point");
 
 
-#endif
 }
 
 void init_module_geometry(py::module &m) {

@@ -35,8 +35,6 @@ if(SKBUILD)
     set(python_module_name pycrccosy)
     pybind11_add_module(${python_module_name} MODULE $<TARGET_OBJECTS:crccosy_python>)
 
-    target_compile_definitions(pycrccosy PRIVATE -DPY_WRAPPER_MODULE_GEOMETRY=1)
-
     target_link_libraries(${python_module_name} PRIVATE crccosy)
 
     install(TARGETS ${python_module_name}
