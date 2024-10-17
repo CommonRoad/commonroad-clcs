@@ -23,6 +23,7 @@ dependencies = [
     "omegaconf>=2.1.1",
     "scipy>=1.4.1",
     "shapely>=2.0.0",
+    "osqp~=0.6.5"
 ]
 
 classifiers = [
