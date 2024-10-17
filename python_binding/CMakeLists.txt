@@ -25,7 +25,7 @@ else()
 endif()
 
 add_library(crccosy_python OBJECT
-        pybind.cc
+        py_bind.cc
         module_geometry.cc
 )
 target_link_libraries(crccosy_python PRIVATE crccosy pybind11::module)
