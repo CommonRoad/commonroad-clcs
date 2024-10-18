@@ -17,14 +17,14 @@ class PickleTest(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        try:
-            # Local Test side
-            with open(os.path.abspath("reference_path_b.pic"), "rb") as f:
-                data_set = pickle.load(f)
-        except OSError as e:
-            # CI Test side
-            with open(os.path.abspath("geometry/reference_path_b.pic"), "rb") as f:
-                data_set = pickle.load(f)
+        # get path of test directory
+        file_dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        # get data file
+        with open(os.path.join(file_dir_path, "test_data/reference_path_b.pic"), "rb") as f:
+            data_set = pickle.load(f)
+
+        # get reference path from data
         self.reference_path_test = data_set['reference_path']
 
         # CLCS pybind object
