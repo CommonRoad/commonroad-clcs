@@ -1,8 +1,8 @@
 import math
 import os
 import unittest
-
 import pickle
+
 import numpy as np
 
 from commonroad_clcs import pycrccosy
