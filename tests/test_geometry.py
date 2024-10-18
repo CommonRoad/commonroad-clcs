@@ -1,8 +1,10 @@
 import unittest
-import commonroad_clcs.clcs as clcs
+import os
+
 import numpy as np
 import pickle
-import os
+
+import commonroad_clcs.clcs as clcs
 
 
 class TestGeometry(unittest.TestCase):
