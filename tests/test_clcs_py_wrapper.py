@@ -12,14 +12,9 @@ class TestPyCLCSWrapper(unittest.TestCase):
     def setUp(self) -> None:
         # get path of test directory
         file_dir_path = os.path.dirname(os.path.realpath(__file__))
-        try:
-            # Local
-            with open(os.path.join(file_dir_path, 'test_data/reference_path_b.pic'), 'rb') as path_file:
-                data_set = pickle.load(path_file)
-        except OSError as e:
-            # CI
-            with open(os.path.abspath('geometry/reference_path_b.pic'), 'rb') as path_file:
-                data_set = pickle.load(path_file)
+        # get data file
+        with open(os.path.join(file_dir_path, 'test_data/reference_path_b.pic'), 'rb') as path_file:
+            data_set = pickle.load(path_file)
 
         # get reference path from test data
         self.reference_path_test = data_set['reference_path']
@@ -27,14 +22,9 @@ class TestPyCLCSWrapper(unittest.TestCase):
                                                                       eps2=0.0,
                                                                       resample=False)
 
-        try:
-            # Local
-            with open(os.path.join(file_dir_path, 'test_data/reference_path_b_data_new.pic'), 'rb') as property_file:
-                property_set = pickle.load(property_file)
-        except OSError as e:
-            # CI
-            with open(os.path.abspath('geometry/reference_path_property.pic'), 'rb') as property_file:
-                property_set = pickle.load(property_file)
+        # get data file
+        with open(os.path.join(file_dir_path, 'test_data/reference_path_b_data_new.pic'), 'rb') as property_file:
+            property_set = pickle.load(property_file)
 
         # get reference path properties from data
         self.ref_pos = property_set['path_length']
