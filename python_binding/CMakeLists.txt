@@ -35,7 +35,21 @@ if(SKBUILD)
     set(python_module_name pycrccosy)
     pybind11_add_module(${python_module_name} MODULE $<TARGET_OBJECTS:crccosy_python>)
 
+    # link crccosy
     target_link_libraries(${python_module_name} PRIVATE crccosy)
+
+    # link libs11n
+    if(NOT CR_CLCS_BUILD_S11N)
+        message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been DISABLED for pycrccosy")
+        target_compile_definitions(${python_module_name} PRIVATE -DENABLE_SERIALIZER=0)
+    else()
+        message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been ENABLED for pycrccosy")
+        target_link_libraries(${python_module_name}
+                PUBLIC
+                s11n::s11n
+        )
+        target_compile_definitions(${python_module_name} PRIVATE -DENABLE_SERIALIZER=1)
+    endif()
 
     install(TARGETS ${python_module_name}
             LIBRARY DESTINATION commonroad_clcs
