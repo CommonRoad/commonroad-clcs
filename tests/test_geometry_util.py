@@ -8,29 +8,27 @@ from matplotlib import pyplot as plt
 
 import commonroad_clcs.util as clcs_util
 
-class TestGeometryUtil(unittest.TestCase):
+class TestCLCSUtil(unittest.TestCase):
     def setUp(self) -> None:
         # Debug plot settings (default False, because of CI)
         self.show_plots = False
-        try:
-            # Local Test side
-            with open(os.path.abspath('reference_path_b.pic'), 'rb') as path_file:
-                data_set = pickle.load(path_file)
-        except OSError as e:
-            # CI Test side
-            with open(os.path.abspath('geometry/reference_path_b.pic'), 'rb') as path_file:
-                data_set = pickle.load(path_file)
+
+        # get path of test directory
+        file_dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        # get data file
+        with open(os.path.join(file_dir_path, 'test_data/reference_path_b.pic'), 'rb') as path_file:
+            data_set = pickle.load(path_file)
+
+        # get reference path from data
         self.reference_path_test = data_set['reference_path']
         self.number_of_samples = len(self.reference_path_test)
 
-        try:
-            # Local Test side
-            with open(os.path.abspath('reference_path_b_data_new.pic'), 'rb') as data_file:
-                data_details = pickle.load(data_file)
-        except OSError as e:
-            # CI Test side
-            with open(os.path.abspath('geometry/reference_path_b_data_new.pic'), 'rb') as data_file:
-                data_details = pickle.load(data_file)
+        # get data file
+        with open(os.path.join(file_dir_path, 'test_data/reference_path_b_data_new.pic'), 'rb') as data_file:
+            data_details = pickle.load(data_file)
+
+        # get reference path properties from data
         self.polyline_length = data_details['polyline_length']
         self.path_length = data_details['path_length']
         self.curvature = data_details['curvature']
