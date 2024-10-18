@@ -7,7 +7,7 @@ import pickle
 import commonroad_clcs.clcs as clcs
 
 
-class TestGeometry(unittest.TestCase):
+class TestPyCLCSWrapper(unittest.TestCase):
 
     def setUp(self) -> None:
         # get path of test directory
