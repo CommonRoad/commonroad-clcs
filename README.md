@@ -11,7 +11,7 @@ TBD: Description
 ## :rocket: Getting Started
 
 
-## :blue_book: Documentation
+## :books: Documentation
 
 
 ## :speech_balloon: References

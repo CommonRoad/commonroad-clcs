@@ -1,0 +1,13 @@
+#titlearea {
+    background-color: #043c82;
+    color: white;
+}
+
+#projectlogo {
+    vertical-align: middle;
+}
+
+#projectlogo img {
+    height: 30px;
+    padding: 10px;
+}

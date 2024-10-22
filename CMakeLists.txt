@@ -20,7 +20,7 @@ project(CommonRoadCLCS
         LANGUAGES CXX
         VERSION ${CR_CLCS_VERSION}
         HOMEPAGE_URL "https://commonroad.in.tum.de/tools/commonroad-clcs"
-        DESCRIPTION "C++ extension for the commonroad-clcs Python package")
+        DESCRIPTION "C++ extension for the CommonRoad Curvilinear Coordinate System Python package")
 
 # CMP0077 (3.13) - option() honors normal variables.
 # Relevant for Eigen3

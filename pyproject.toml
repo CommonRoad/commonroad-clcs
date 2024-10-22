@@ -46,10 +46,9 @@ test = [
     "parameterized~=0.9.0"
 ]
 docs = [
-    "sphinx>=4.5.0",
-    "sphinx-autodoc-typehints>=1.18.1",
-    "sphinx-rtd-theme>=2.0.0",
-    "m2r2>=0.3.0",
+    "mkdocs~=1.6.1",
+    "mkdocstrings-python~=1.8.0",
+    "mkdocs-material~=9.5.10"
 ]
 build = [
     "scikit-build-core~=0.8.0",
