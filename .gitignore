@@ -35,8 +35,8 @@ share/python-wheels/
 # third party directories which are pulled by CMake FetchContent
 third_party/pybind11/
 
-# Sphinx documentation
-doctrees
+# MkDocs Documentation
+site/
 
 # Jupyter Notebook
 .ipynb_checkpoints

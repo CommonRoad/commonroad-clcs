@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple, Callable, Dict
 from copy import deepcopy
 
 # third party
-import Polygon.Utils as gpc_utils
 import numpy as np
 from scipy.integrate import quad
 from scipy import sparse
@@ -305,12 +304,84 @@ def smooth_polyline_spline(
     return new_polyline
 
 
+def reducePointsDP(cont, tol):
+    """
+    Implementation taken from the Polygon3 package, which is a Python package built around the
+    General Polygon Clipper (GPC) Library
+    Source: https://github.com/jraedler/Polygon3/blob/master/Polygon/Utils.py#L188
+    ----------------------------------------------------------------------------------------------
+
+    Remove points of the contour 'cont' using the Douglas-Peucker algorithm. The
+    value of tol sets the maximum allowed difference between the contours. This
+    (slightly changed) code was written by Schuyler Erle and put into public
+    domain. It uses an iterative approach that may need some time to complete,
+    but will give better results than reducePoints().
+
+    :param cont: list of points (contour)
+    :param tol: allowed difference between original and new contour
+    :return new list of points
+    """
+    anchor  = 0
+    floater = len(cont) - 1
+    stack   = []
+    keep    = set()
+    stack.append((anchor, floater))
+    while stack:
+        anchor, floater = stack.pop()
+        # initialize line segment
+        # if cont[floater] != cont[anchor]:
+        if cont[floater][0] != cont[anchor][0] or cont[floater][1] != cont[anchor][1]:
+            anchorX = float(cont[floater][0] - cont[anchor][0])
+            anchorY = float(cont[floater][1] - cont[anchor][1])
+            seg_len = math.sqrt(anchorX ** 2 + anchorY ** 2)
+            # get the unit vector
+            anchorX /= seg_len
+            anchorY /= seg_len
+        else:
+            anchorX = anchorY = seg_len = 0.0
+        # inner loop:
+        max_dist = 0.0
+        farthest = anchor + 1
+        for i in range(anchor + 1, floater):
+            dist_to_seg = 0.0
+            # compare to anchor
+            vecX = float(cont[i][0] - cont[anchor][0])
+            vecY = float(cont[i][1] - cont[anchor][1])
+            seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
+            # dot product:
+            proj = vecX * anchorX + vecY * anchorY
+            if proj < 0.0:
+                dist_to_seg = seg_len
+            else:
+                # compare to floater
+                vecX = float(cont[i][0] - cont[floater][0])
+                vecY = float(cont[i][1] - cont[floater][1])
+                seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
+                # dot product:
+                proj = vecX * (-anchorX) + vecY * (-anchorY)
+                if proj < 0.0:
+                    dist_to_seg = seg_len
+                else:  # calculate perpendicular distance to line (pythagorean theorem):
+                    dist_to_seg = math.sqrt(abs(seg_len ** 2 - proj ** 2))
+                if max_dist < dist_to_seg:
+                    max_dist = dist_to_seg
+                    farthest = i
+        if max_dist <= tol: # use line segment
+            keep.add(anchor)
+            keep.add(floater)
+        else:
+            stack.append((anchor, farthest))
+            stack.append((farthest, floater))
+    keep = list(keep)
+    keep.sort()
+    return [cont[i] for i in keep]
+
 def smooth_polyline_rdp(polyline: np.ndarray, tol=2e-5) -> np.ndarray:
     """
     Smooths a polyline using Ramer-Douglas-Peucker algorithm.
     RDP is a point reduction algorithm to simplify polylines
     """
-    list_reduced_polyline = gpc_utils.reducePointsDP(polyline.tolist(), tol)
+    list_reduced_polyline = reducePointsDP(polyline.tolist(), tol)
     return np.asarray(list_reduced_polyline)
 
 
