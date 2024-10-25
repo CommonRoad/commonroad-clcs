@@ -31,7 +31,7 @@ class ProcessorFactory:
     }
 
     @staticmethod
-    def create_processor(params: CLCSParams):
+    def create_processor(params: CLCSParams) -> IReferencePathProcessor:
         """Returns processing strategy class for given processing option in params"""
         processing_option: ProcessingOption = params.processing_option
         processor_class = ProcessorFactory._dict_processing_strategy.get(processing_option)
