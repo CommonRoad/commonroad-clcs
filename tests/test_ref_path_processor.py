@@ -24,7 +24,6 @@ from commonroad_clcs.config import (
 )
 
 from commonroad_clcs import util as clcs_util
-from commonroad_clcs.util import compute_curvature_from_polyline, compute_curvature_from_polyline_python
 
 
 class RefPathProcessorTest(unittest.TestCase):
@@ -63,11 +62,13 @@ class RefPathProcessorTest(unittest.TestCase):
         ref_path_processor, ref_path_new = self._run_processor(params)
 
         # check
-        assert isinstance(ref_path_processor, NoPreProcessor)
-        assert np.array_equal(self.ref_path_orig,
-                              ref_path_new)
-        assert np.array_equal(self.ref_path_orig,
-                              ref_path_processor.ref_path_original)
+        self.assertIsInstance(ref_path_processor, NoPreProcessor)
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig,ref_path_new)
+        )
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig,ref_path_processor.ref_path_original)
+        )
 
     # TODO parameterize different inputs
     # TODO add adaptive sampling test
@@ -86,21 +87,21 @@ class RefPathProcessorTest(unittest.TestCase):
         self.assertIsInstance(ref_path_processor, ResamplingProcessor)
         self.assertTrue(
             np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
-                        1.0,
+                        params.resampling.fixed_step,
                         atol=1e-02)
         )
 
     # TODO parameterize different inputs
     def test_curve_subdivision_processor(self):
         """Test case for CurveSubdivisionProcessor"""
+        # get current  max curvature
+        curr_max_curv = np.max(clcs_util.compute_curvature_from_polyline_python(self.ref_path_orig))
+
         # set params
         params = CLCSParams(processing_option=ProcessingOption.CURVE_SUBDIVISION)
         params.subdivision.degree = 2
         params.resampling.option = ResamplingOption.FIXED
         params.resampling.fixed_step = 1.0
-
-        # set max curvature
-        curr_max_curv = np.max(compute_curvature_from_polyline(self.ref_path_orig))
         params.subdivision.max_curvature = 0.75 * curr_max_curv
 
         # process reference path
@@ -110,17 +111,44 @@ class RefPathProcessorTest(unittest.TestCase):
         self.assertIsInstance(ref_path_processor, CurveSubdivisionProcessor)
         # check max curvature
         self.assertLessEqual(
-            np.max(compute_curvature_from_polyline_python(ref_path_new)),
+            np.max(clcs_util.compute_curvature_from_polyline_python(ref_path_new)),
             params.subdivision.max_curvature
+        )
+        # check sampling of output path
+        self.assertTrue(
+            np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
+                        params.resampling.fixed_step,
+                        atol=1e-02)
         )
 
     def test_spline_smoothing_processor(self):
         """Test case for SplineSmoothingProcessor"""
-        pass
+        # set params
+        params = CLCSParams(processing_option=ProcessingOption.SPLINE_SMOOTHING)
+        params.spline.smoothing_factor = 10.0
+        params.resampling.option = ResamplingOption.FIXED
+        params.resampling.fixed_step = 2.0
 
-    def test_elastic_band_processor(self):
+        # process reference path
+        ref_path_processor, ref_path_new = self._run_processor(params)
+
+        # check
+        self.assertIsInstance(ref_path_processor, SplineSmoothingProcessor)
+        # check max curvature
+        self.assertLess(
+            np.max(clcs_util.compute_curvature_from_polyline_python(ref_path_new)),
+            np.max(clcs_util.compute_curvature_from_polyline_python(self.ref_path_orig))
+        )
+        # check sampling of output path
+        self.assertTrue(
+            np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
+                        params.resampling.fixed_step,
+                        atol=1e-02)
+        )
+
+
+def test_elastic_band_processor(self):
         """Test case for ElasticBandProcessor"""
         pass
 
 # TODO use @parameterized.expand for test case parameterization
-# TODO create special test config file
