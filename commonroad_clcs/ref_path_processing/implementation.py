@@ -44,6 +44,7 @@ class ResamplingProcessor(IReferencePathProcessor):
             return resample_polyline_adaptive(ref_path,
                                               min_ds=min_step,
                                               max_ds=max_step,
+                                              interpolation_type=resampling_params.interpolation_type
                                               )
 
     def _process_path(self, ref_path_input: np.ndarray, *args, **kwargs) -> Optional[np.ndarray]:
