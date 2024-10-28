@@ -6,9 +6,6 @@ import pickle
 
 # third party
 import numpy as np
-from defusedxml.ElementTree import parse
-from fontTools.ttLib.reorderGlyphs import SubTablePath
-from parameterized import param
 
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.ref_path_processing.implementation import (
@@ -66,10 +63,10 @@ class RefPathProcessorTest(unittest.TestCase):
         # check
         self.assertIsInstance(ref_path_processor, NoPreProcessor)
         self.assertTrue(
-            np.array_equal(self.ref_path_orig,ref_path_new)
+            np.array_equal(self.ref_path_orig, ref_path_new)
         )
         self.assertTrue(
-            np.array_equal(self.ref_path_orig,ref_path_processor.ref_path_original)
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
         )
 
     # TODO parameterize different inputs
@@ -87,10 +84,15 @@ class RefPathProcessorTest(unittest.TestCase):
 
         # check
         self.assertIsInstance(ref_path_processor, ResamplingProcessor)
+        # check sampling of output path
         self.assertTrue(
             np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
                         params.resampling.fixed_step,
                         atol=1e-02)
+        )
+        # check if original path is unchanged
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
         )
 
     def test_curve_subdivision_processor(self):
@@ -121,6 +123,10 @@ class RefPathProcessorTest(unittest.TestCase):
                         params.resampling.fixed_step,
                         atol=1e-02)
         )
+        # check if original path is unchanged
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
+        )
 
     def test_spline_smoothing_processor(self):
         """Test case for SplineSmoothingProcessor"""
@@ -146,6 +152,10 @@ class RefPathProcessorTest(unittest.TestCase):
                         params.resampling.fixed_step,
                         atol=1e-02)
         )
+        # check if original path is unchanged
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
+        )
 
     def test_elastic_band_processor(self):
         """Test case for ElasticBandProcessor"""
@@ -170,4 +180,8 @@ class RefPathProcessorTest(unittest.TestCase):
             np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
                         params.resampling.fixed_step,
                         atol=1e-02)
+        )
+        # check if original path is unchanged
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
         )
