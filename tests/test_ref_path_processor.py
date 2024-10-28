@@ -6,7 +6,9 @@ import pickle
 
 # third party
 import numpy as np
+from defusedxml.ElementTree import parse
 from fontTools.ttLib.reorderGlyphs import SubTablePath
+from parameterized import param
 
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.ref_path_processing.implementation import (
@@ -91,7 +93,6 @@ class RefPathProcessorTest(unittest.TestCase):
                         atol=1e-02)
         )
 
-    # TODO parameterize different inputs
     def test_curve_subdivision_processor(self):
         """Test case for CurveSubdivisionProcessor"""
         # get current  max curvature
@@ -146,9 +147,27 @@ class RefPathProcessorTest(unittest.TestCase):
                         atol=1e-02)
         )
 
-
-def test_elastic_band_processor(self):
+    def test_elastic_band_processor(self):
         """Test case for ElasticBandProcessor"""
-        pass
+        # set params
+        params = CLCSParams(processing_option=ProcessingOption.ELASTIC_BAND)
+        params.elastic_band.input_resampling_step = 2.0
+        params.resampling.option = ResamplingOption.FIXED
+        params.resampling.fixed_step = 2.0
 
-# TODO use @parameterized.expand for test case parameterization
+        # process reference path
+        ref_path_processor, ref_path_new = self._run_processor(params)
+
+        # check
+        self.assertIsInstance(ref_path_processor, ElasticBandProcessor)
+        # check max curvature
+        self.assertLess(
+            np.max(clcs_util.compute_curvature_from_polyline_python(ref_path_new)),
+            np.max(clcs_util.compute_curvature_from_polyline_python(self.ref_path_orig)),
+        )
+        # check sampling of output path
+        self.assertTrue(
+            np.allclose(clcs_util.compute_segment_intervals_from_polyline(ref_path_new),
+                        params.resampling.fixed_step,
+                        atol=1e-02)
+        )
