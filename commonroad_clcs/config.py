@@ -177,6 +177,9 @@ class ElasticBandParams(BaseParam):
     # constraint for max lateral deviation of points
     max_deviation: float = 0.15
 
+    # coarse resampling step of the input path before QP optimization
+    input_resampling_step: float = 1.0
+
     # weights for optimization
     weight_smooth: float = 1.0
     weight_lat_error: float = 0.001

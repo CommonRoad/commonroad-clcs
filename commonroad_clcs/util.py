@@ -387,6 +387,7 @@ def smooth_polyline_rdp(polyline: np.ndarray, tol=2e-5) -> np.ndarray:
 
 def smooth_polyline_elastic_band(
         polyline: np.ndarray,
+        input_resampling: float = 1.0,
         max_deviation: float = 0.15,
         weight_smooth: float = 1.0,
         weight_lat_error: float = 0.001,
@@ -402,8 +403,9 @@ def smooth_polyline_elastic_band(
     - https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_path_smoother/docs/eb/
     - Reimplemented by: Kilian Northoff, Tobias Mascetta
     :param polyline: input polyline as np.ndarray
+    :param input_resampling: coarse resampling of the input polyline for stability of QP solver
     :param max_deviation: constraint for max lateral deviation
-    :param weight_smooth: weight for smothing
+    :param weight_smooth: weight for smoothing
     :param weight_lat_error: weight for lateral error
     :param solver_max_iter: max iterations solver
     :return: smoothed polyline as np.ndarray
@@ -416,8 +418,7 @@ def smooth_polyline_elastic_band(
         iter_cnt += 1
 
     #  Pre-process for optimization stability: downsample coarsely
-    delta_s = 1.0
-    polyline = resample_polyline(polyline, delta_s)
+    polyline = resample_polyline(polyline, input_resampling)
 
     # init vectors and matrices of QP problem
     n = polyline.shape[0]   # num points
