@@ -239,7 +239,7 @@ def smooth_polyline_subdivision(
 
     # iterative smoothing
     # TODO use max deviation ?
-    while (curr_max_curv > max_curv) or (iter_cnt < max_iter):
+    while (curr_max_curv > max_curv) and (iter_cnt < max_iter):
         new_polyline = lane_riesenfeld_subdivision(new_polyline, degree, refinements)
 
         # get max curvature
