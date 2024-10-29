@@ -1,6 +1,6 @@
 # standard imports
 import math
-from typing import List, Optional, Tuple, Callable, Dict
+from typing import List, Optional, Tuple
 from copy import deepcopy
 
 # third party
@@ -9,19 +9,16 @@ from scipy.integrate import quad
 from scipy import sparse
 from scipy.interpolate import (
     splprep,
-    splev,
-    interp1d,
-    CubicSpline,
-    Akima1DInterpolator
+    splev
 )
 import osqp
 
 # commonroad
 from commonroad.common.validity import is_valid_polyline
 
-# commonroad-dc
+# commonroad-clcs
 import commonroad_clcs.pycrccosy as pycrccosy
-
+from commonroad_clcs.helper.interpolation import Interpolator
 
 def intersect_segment_segment(
         segment_1: Tuple[np.ndarray, np.ndarray],
@@ -303,79 +300,6 @@ def smooth_polyline_spline(
 
     return new_polyline
 
-
-def reducePointsDP(cont, tol):
-    """
-    Implementation taken from the Polygon3 package, which is a Python package built around the
-    General Polygon Clipper (GPC) Library
-    Source: https://github.com/jraedler/Polygon3/blob/master/Polygon/Utils.py#L188
-    ----------------------------------------------------------------------------------------------
-
-    Remove points of the contour 'cont' using the Douglas-Peucker algorithm. The
-    value of tol sets the maximum allowed difference between the contours. This
-    (slightly changed) code was written by Schuyler Erle and put into public
-    domain. It uses an iterative approach that may need some time to complete,
-    but will give better results than reducePoints().
-
-    :param cont: list of points (contour)
-    :param tol: allowed difference between original and new contour
-    :return new list of points
-    """
-    anchor  = 0
-    floater = len(cont) - 1
-    stack   = []
-    keep    = set()
-    stack.append((anchor, floater))
-    while stack:
-        anchor, floater = stack.pop()
-        # initialize line segment
-        # if cont[floater] != cont[anchor]:
-        if cont[floater][0] != cont[anchor][0] or cont[floater][1] != cont[anchor][1]:
-            anchorX = float(cont[floater][0] - cont[anchor][0])
-            anchorY = float(cont[floater][1] - cont[anchor][1])
-            seg_len = math.sqrt(anchorX ** 2 + anchorY ** 2)
-            # get the unit vector
-            anchorX /= seg_len
-            anchorY /= seg_len
-        else:
-            anchorX = anchorY = seg_len = 0.0
-        # inner loop:
-        max_dist = 0.0
-        farthest = anchor + 1
-        for i in range(anchor + 1, floater):
-            dist_to_seg = 0.0
-            # compare to anchor
-            vecX = float(cont[i][0] - cont[anchor][0])
-            vecY = float(cont[i][1] - cont[anchor][1])
-            seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
-            # dot product:
-            proj = vecX * anchorX + vecY * anchorY
-            if proj < 0.0:
-                dist_to_seg = seg_len
-            else:
-                # compare to floater
-                vecX = float(cont[i][0] - cont[floater][0])
-                vecY = float(cont[i][1] - cont[floater][1])
-                seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
-                # dot product:
-                proj = vecX * (-anchorX) + vecY * (-anchorY)
-                if proj < 0.0:
-                    dist_to_seg = seg_len
-                else:  # calculate perpendicular distance to line (pythagorean theorem):
-                    dist_to_seg = math.sqrt(abs(seg_len ** 2 - proj ** 2))
-                if max_dist < dist_to_seg:
-                    max_dist = dist_to_seg
-                    farthest = i
-        if max_dist <= tol: # use line segment
-            keep.add(anchor)
-            keep.add(floater)
-        else:
-            stack.append((anchor, farthest))
-            stack.append((farthest, floater))
-    keep = list(keep)
-    keep.sort()
-    return [cont[i] for i in keep]
-
 def smooth_polyline_rdp(polyline: np.ndarray, tol=2e-5) -> np.ndarray:
     """
     Smooths a polyline using Ramer-Douglas-Peucker algorithm.
@@ -504,42 +428,6 @@ def smooth_polyline_elastic_band(
     new_polyline = np.array([x_coords_new, y_coords_new]).transpose()
 
     return new_polyline
-
-
-class Interpolator:
-    """
-    Factory class for creating 1d interpolation functions.
-
-    Supported interpolation types:
-    - "linear": Piecewise linear interpolation
-    - "cubic": Cubic spline interpolation
-    - "akima": Akima spline interpolation
-    """
-    _dict_interp_functions: Dict[str, Callable] = {
-        "linear": interp1d,
-        "cubic": CubicSpline,
-        "akima": Akima1DInterpolator
-    }
-
-    @classmethod
-    def get_function(cls,
-                     x: np.ndarray,
-                     y: np.ndarray,
-                     interp_type: str = "linear",
-                     **kwargs):
-        """
-        Returns an interpolation function for the given interpolation type
-        :param x: 1d array of independent variable
-        :param y: 1d array of dependent variable
-        :param interp_type: string for the type of interpolation
-        """
-        func: Optional[Callable] = cls._dict_interp_functions.get(interp_type)
-
-        if func is None:
-            raise KeyError(f"Unsupported interpolation type: {interp_type}. "
-                           f"Supported types: {list(cls._dict_interp_functions.keys())}")
-        return func(x, y, **kwargs)
-
 
 def resample_polyline_python(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
     """
@@ -682,24 +570,99 @@ def resample_polyline_adaptive(
     interp_x = Interpolator.get_function(pathlength, x, interp_type=interpolation_type)
     interp_y = Interpolator.get_function(pathlength, y, interp_type=interpolation_type)
 
-    ds = max_ds
-    for i in range(len(x)):
-        if ds < pathlength[i] - _wp_new[-1] or i == (len(x) - 1):
-            if i == (len(x) - 1):
-                # if last point is reached, just add last point of original polyline
-                ds = pathlength[-1] - _wp_new[-1]
-            s = _wp_new[-1] + ds
+    # initialize for first point
+    idx = 0
+    curvature_radius = 1 / abs(curvature_array[idx])
+    ds = min(max_ds,  1 / alpha * curvature_radius)
+    ds = max(ds, min_ds)
 
-            # interpolate for new x, y, curvature at pathlength s
-            _x_new.append(float(interp_x(s)))
-            _y_new.append(float(interp_y(s)))
-            _wp_new.append(s)
-            # reset
-            ds = max_ds
+    while idx < len(x) - 1:
+        s = _wp_new[-1] + ds
+        _wp_new.append(s)
 
-        curvature_radius = 1 / abs(curvature_array[i])
-        ds = min(ds,  1 / alpha * curvature_radius)
-        ds = max(ds, min_ds)
+        if _wp_new[-1] > pathlength[idx]:
+            idx += 1
+            # compute current ds based on local curvature
+            curvature_radius = 1 / abs(curvature_array[idx])
+            ds = min(max_ds,  1 / alpha * curvature_radius)
+            ds = max(ds, min_ds)
+
+    # interpolate x and y values at resampled s positions
+    _wp_new = np.array(_wp_new)
+    _x_new = interp_x(_wp_new)
+    _y_new = interp_y(_wp_new)
 
     resampled_polyline = np.column_stack((_x_new, _y_new))
     return resampled_polyline
+
+def reducePointsDP(cont, tol):
+    """
+    Implementation taken from the Polygon3 package, which is a Python package built around the
+    General Polygon Clipper (GPC) Library
+    Source: https://github.com/jraedler/Polygon3/blob/master/Polygon/Utils.py#L188
+    ----------------------------------------------------------------------------------------------
+
+    Remove points of the contour 'cont' using the Douglas-Peucker algorithm. The
+    value of tol sets the maximum allowed difference between the contours. This
+    (slightly changed) code was written by Schuyler Erle and put into public
+    domain. It uses an iterative approach that may need some time to complete,
+    but will give better results than reducePoints().
+
+    :param cont: list of points (contour)
+    :param tol: allowed difference between original and new contour
+    :return new list of points
+    """
+    anchor  = 0
+    floater = len(cont) - 1
+    stack   = []
+    keep    = set()
+    stack.append((anchor, floater))
+    while stack:
+        anchor, floater = stack.pop()
+        # initialize line segment
+        # if cont[floater] != cont[anchor]:
+        if cont[floater][0] != cont[anchor][0] or cont[floater][1] != cont[anchor][1]:
+            anchorX = float(cont[floater][0] - cont[anchor][0])
+            anchorY = float(cont[floater][1] - cont[anchor][1])
+            seg_len = math.sqrt(anchorX ** 2 + anchorY ** 2)
+            # get the unit vector
+            anchorX /= seg_len
+            anchorY /= seg_len
+        else:
+            anchorX = anchorY = seg_len = 0.0
+        # inner loop:
+        max_dist = 0.0
+        farthest = anchor + 1
+        for i in range(anchor + 1, floater):
+            dist_to_seg = 0.0
+            # compare to anchor
+            vecX = float(cont[i][0] - cont[anchor][0])
+            vecY = float(cont[i][1] - cont[anchor][1])
+            seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
+            # dot product:
+            proj = vecX * anchorX + vecY * anchorY
+            if proj < 0.0:
+                dist_to_seg = seg_len
+            else:
+                # compare to floater
+                vecX = float(cont[i][0] - cont[floater][0])
+                vecY = float(cont[i][1] - cont[floater][1])
+                seg_len = math.sqrt( vecX ** 2 + vecY ** 2 )
+                # dot product:
+                proj = vecX * (-anchorX) + vecY * (-anchorY)
+                if proj < 0.0:
+                    dist_to_seg = seg_len
+                else:  # calculate perpendicular distance to line (pythagorean theorem):
+                    dist_to_seg = math.sqrt(abs(seg_len ** 2 - proj ** 2))
+                if max_dist < dist_to_seg:
+                    max_dist = dist_to_seg
+                    farthest = i
+        if max_dist <= tol: # use line segment
+            keep.add(anchor)
+            keep.add(floater)
+        else:
+            stack.append((anchor, farthest))
+            stack.append((farthest, floater))
+    keep = list(keep)
+    keep.sort()
+    return [cont[i] for i in keep]
