@@ -6,6 +6,7 @@ import pickle
 
 # third party
 import numpy as np
+from parameterized import parameterized
 
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.ref_path_processing.implementation import (
@@ -27,7 +28,7 @@ from commonroad_clcs import util as clcs_util
 
 class RefPathProcessorTest(unittest.TestCase):
     """
-    Test cases for the ReferencePathProcessor interface for different options for pre-processing the refernece path.
+    Test cases for the ReferencePathProcessor interface for different options for pre-processing the reference path.
     """
 
     def setUp(self) -> None:
@@ -69,11 +70,8 @@ class RefPathProcessorTest(unittest.TestCase):
             np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
         )
 
-    # TODO parameterize different inputs
-    # TODO add adaptive sampling test
-    # TODO test stored original reference path in RefPathProcessor
-    def test_resampling_processor(self):
-        """Test case for ResamplingProcessor"""
+    def test_resampling_processor_fixed_sampling(self):
+        """Test case for ResamplingProcessor with fixed sampling"""
         # set params
         params = CLCSParams(processing_option=ProcessingOption.RESAMPLE)
         params.resampling.option = ResamplingOption.FIXED
@@ -90,6 +88,30 @@ class RefPathProcessorTest(unittest.TestCase):
                         params.resampling.fixed_step,
                         atol=1e-02)
         )
+        # check if original path is unchanged
+        self.assertTrue(
+            np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
+        )
+
+    def test_resampling_processor_adaptive_sampling(self, atol=1e-3):
+        """Test case for ResamplingProcessor with adaptive sampling"""
+        # set params
+        params = CLCSParams(processing_option=ProcessingOption.RESAMPLE)
+        params.resampling.option = ResamplingOption.ADAPTIVE
+        params.resampling.min_step = 0.5
+        params.resampling.max_step = 2.0
+
+        # process reference path
+        ref_path_processor, ref_path_new = self._run_processor(params)
+
+        # check
+        self.assertIsInstance(ref_path_processor, ResamplingProcessor)
+        # check sampling of output path
+        seg_intervals = clcs_util.compute_segment_intervals_from_polyline(ref_path_new)
+        diff_min = seg_intervals - params.resampling.min_step
+        diff_max = params.resampling.max_step - seg_intervals
+        self.assertTrue(np.all(diff_min > -atol))
+        self.assertTrue(np.all(diff_max > -atol))
         # check if original path is unchanged
         self.assertTrue(
             np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
