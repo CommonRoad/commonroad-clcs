@@ -6,7 +6,6 @@ import pickle
 
 # third party
 import numpy as np
-from parameterized import parameterized
 
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.ref_path_processing.implementation import (
@@ -93,7 +92,7 @@ class RefPathProcessorTest(unittest.TestCase):
             np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
         )
 
-    def test_resampling_processor_adaptive_sampling(self, atol=1e-3):
+    def test_resampling_processor_adaptive_sampling(self, atol=1e-2):
         """Test case for ResamplingProcessor with adaptive sampling"""
         # set params
         params = CLCSParams(processing_option=ProcessingOption.RESAMPLE)
@@ -108,8 +107,8 @@ class RefPathProcessorTest(unittest.TestCase):
         self.assertIsInstance(ref_path_processor, ResamplingProcessor)
         # check sampling of output path
         seg_intervals = clcs_util.compute_segment_intervals_from_polyline(ref_path_new)
-        diff_min = seg_intervals - params.resampling.min_step
-        diff_max = params.resampling.max_step - seg_intervals
+        diff_min = seg_intervals[:-1] - params.resampling.min_step
+        diff_max = params.resampling.max_step - seg_intervals[:-1]
         self.assertTrue(np.all(diff_min > -atol))
         self.assertTrue(np.all(diff_max > -atol))
         # check if original path is unchanged

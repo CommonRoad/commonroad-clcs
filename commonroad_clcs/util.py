@@ -577,15 +577,23 @@ def resample_polyline_adaptive(
     ds = max(ds, min_ds)
 
     while idx < len(x) - 1:
-        s = _wp_new[-1] + ds
-        _wp_new.append(s)
-
-        if _wp_new[-1] > pathlength[idx]:
+        if _wp_new[-1] > pathlength[idx + 1]:
+            # next idx of original polyline
             idx += 1
-            # compute current ds based on local curvature
+            # compute current ds based on local curvature of original polyline at current idx
             curvature_radius = 1 / abs(curvature_array[idx])
             ds = min(max_ds,  1 / alpha * curvature_radius)
             ds = max(ds, min_ds)
+        else:
+            # new s coordinate
+            s = _wp_new[-1] + ds
+            if s <= pathlength[-1]:
+                # add new s coordinate
+                _wp_new.append(s)
+            else:
+                # reached end of path: add s coordinate of last point and break
+                _wp_new.append(pathlength[-1])
+                break
 
     # interpolate x and y values at resampled s positions
     _wp_new = np.array(_wp_new)
@@ -594,6 +602,7 @@ def resample_polyline_adaptive(
 
     resampled_polyline = np.column_stack((_x_new, _y_new))
     return resampled_polyline
+
 
 def reducePointsDP(cont, tol):
     """
