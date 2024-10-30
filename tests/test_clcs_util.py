@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 
 import commonroad_clcs.util as clcs_util
 
+
 class TestCLCSUtil(unittest.TestCase):
     def setUp(self) -> None:
         # Debug plot settings (default False, because of CI)
@@ -34,7 +35,75 @@ class TestCLCSUtil(unittest.TestCase):
         self.curvature = data_details['curvature']
         self.orientation = data_details['orientation']
 
+    def test_resample_polyline(self, intervals=(1.0, 2.0, 3.0), tol=1e-2):
+        """Test default user method for polyline resampling with fixed intervals"""
+        for interval in intervals:
+            # resample
+            reference_path_resampled = clcs_util.resample_polyline(self.reference_path_test, interval)
+
+            # check if intervals of resampled polyline are all the same
+            seg_intervals = clcs_util.compute_segment_intervals_from_polyline(reference_path_resampled)
+            self.assertTrue(
+                np.allclose(
+                    seg_intervals,
+                    seg_intervals[0],
+                    atol=tol,
+                    rtol=tol
+                ),
+                msg=f"Intervals after resampling are not the same after resampling with fixed length {interval}"
+            )
+            # check same start point
+            self.assertTrue(
+                np.allclose(self.reference_path_test[0], reference_path_resampled[0]),
+                msg="Start points of original and resampled polylines should be the same."
+            )
+            # check same end point
+            self.assertTrue(
+                np.allclose(self.reference_path_test[-1], reference_path_resampled[-1]),
+                msg="End points of original and resampled polylines should be the same."
+            )
+
+    def test_resample_polyline_adaptive(self, intervals=((0.4, 1.0), (0.6, 2.0), (0.8, 3.0)), tol=1e-2):
+        """Test default user method for polyline resampling with adaptive intervals"""
+        for val in intervals:
+            # get min and max steps
+            min_step = val[0]
+            max_step = val[1]
+
+            # resample
+            reference_path_resampled = clcs_util.resample_polyline_adaptive(
+                self.reference_path_test,
+                min_step,
+                max_step
+            )
+
+            # check intervals of resampled polyline (exclude last point because due to clipping at max length)
+            seg_intervals = clcs_util.compute_segment_intervals_from_polyline(reference_path_resampled)
+            diff_min = seg_intervals[:-1] - min_step
+            diff_max = max_step - seg_intervals[:-1]
+            self.assertTrue(
+                np.all(diff_min > -tol),
+                msg=f"Minimum sampling interval should be {min_step}"
+            )
+            self.assertTrue(
+                np.all(diff_max > -tol),
+                msg=f"Maximum sampling interval should be {max_step}"
+            )
+
+            # check same start point
+            self.assertTrue(
+                np.allclose(self.reference_path_test[0], reference_path_resampled[0]),
+                msg="Start points of original and resampled polylines should be the same."
+            )
+            # check same end point
+            self.assertTrue(
+                np.allclose(self.reference_path_test[-1], reference_path_resampled[-1]),
+                msg="End points of original and resampled polylines should be the same."
+            )
+
+
     def test_resample_polyline_cpp(self):
+        """Test own cpp method for resampling"""
         # sampling intervals
         interval_dense = 1.0
         interval_original = 2.0
@@ -63,7 +132,16 @@ class TestCLCSUtil(unittest.TestCase):
                            interval_coarse,
                            atol=1e-02, rtol=1e-02)
 
+        # check same start point
+        self.assertTrue(np.allclose(self.reference_path_test[0], reference_path_resampled_dense[0]),
+                        msg="Start points of original and resampled polylines should be the same.")
+        # check same end point
+        self.assertTrue(np.allclose(self.reference_path_test[-1], reference_path_resampled_dense[-1]),
+                        msg="End points of original and resampled polylines should be the same.")
+
+
     def test_resample_polyline_with_length_check(self):
+        """Test resampling with length check"""
         length_to_check = 2.0
         reference_path_resampled_length = len(clcs_util.resample_polyline_with_length_check(self.reference_path_test,
                                                                                             length_to_check))
@@ -72,12 +150,14 @@ class TestCLCSUtil(unittest.TestCase):
                            msg="The returned polyline should have more samples")
 
     def test_compute_pathlength_from_polyline(self):
+        """Test pathlength computation"""
         returned_path_length = clcs_util.compute_pathlength_from_polyline(self.reference_path_test)
         self.assertEqual(self.number_of_samples, len(returned_path_length),
                          msg='Polylines should be equally resampled')
         assert np.allclose(returned_path_length, self.path_length)
 
     def test_compute_polyline_length(self):
+        """Test length computation"""
         returned_polyline_length = clcs_util.compute_polyline_length(self.reference_path_test)
         assert math.isclose(returned_polyline_length, self.polyline_length)
 
@@ -95,12 +175,14 @@ class TestCLCSUtil(unittest.TestCase):
         assert np.allclose(curvature_array_cpp, curvature_array_py, rtol=1e-3)
 
     def test_compute_orientation_from_polyline(self):
+        """Test orientation computation"""
         returned_orientation = clcs_util.compute_orientation_from_polyline(self.reference_path_test)
         self.assertEqual(self.number_of_samples, len(returned_orientation),
                          msg='Polylines should be equally resampled')
         assert np.allclose(returned_orientation, self.orientation)
 
     def test_resample_polyline_python(self):
+        """Test own python method for polyline resampling"""
         self.assertGreaterEqual(self.number_of_samples, 2,
                                 msg="Polyline should have at least 2 points")
         returned_polyline = clcs_util.resample_polyline_python(self.reference_path_test, 2.0)
@@ -168,6 +250,7 @@ class TestCLCSUtil(unittest.TestCase):
                         msg="All points of the refined polylines should be identical")
 
     def _plot_subdivision_test(self, ref_path_refined):
+        """Debug plotting"""
         plt.figure()
         plt.plot(self.reference_path_test[:, 0], self.reference_path_test[:, 1],  marker=".", color="black",
                  label="original")

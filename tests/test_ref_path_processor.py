@@ -109,8 +109,14 @@ class RefPathProcessorTest(unittest.TestCase):
         seg_intervals = clcs_util.compute_segment_intervals_from_polyline(ref_path_new)
         diff_min = seg_intervals[:-1] - params.resampling.min_step
         diff_max = params.resampling.max_step - seg_intervals[:-1]
-        self.assertTrue(np.all(diff_min > -atol))
-        self.assertTrue(np.all(diff_max > -atol))
+        self.assertTrue(
+            np.all(diff_min > -atol),
+            msg=f"minimum sampling interval should be {params.resampling.min_step}"
+        )
+        self.assertTrue(
+            np.all(diff_max > -atol),
+            msg=f"maximum sampling interval should be {params.resampling.max_step}"
+        )
         # check if original path is unchanged
         self.assertTrue(
             np.array_equal(self.ref_path_orig, ref_path_processor.ref_path_original)
