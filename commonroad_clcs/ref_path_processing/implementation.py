@@ -9,6 +9,9 @@ from .processor import IReferencePathProcessor
 from commonroad_clcs.util import (
     resample_polyline,
     resample_polyline_adaptive,
+)
+
+from commonroad_clcs.helper.smoothing import (
     smooth_polyline_subdivision,
     smooth_polyline_spline,
     smooth_polyline_elastic_band
