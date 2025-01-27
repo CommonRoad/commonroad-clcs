@@ -164,7 +164,7 @@ class SubdivisionParams(BaseParam):
     # desired maximum curvature limit
     max_curvature: float = 0.135
 
-    # TODO maximum lateral deviation from original path
+    # maximum lateral deviation from original path
     max_deviation: float = 3.0
 
     # maximum number of iterations for subdivision
