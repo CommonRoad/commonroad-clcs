@@ -11,15 +11,17 @@ from scipy.interpolate import (
     splev
 )
 import osqp
+from shapely import LineString, Point
 
 # commonroad-clcs
 from commonroad_clcs.util import (
-    compute_curvature_from_polyline_python,
+    compute_curvature_from_polyline,
     compute_orientation_from_polyline,
     resample_polyline,
     reducePointsDP,
     chaikins_corner_cutting,
-    lane_riesenfeld_subdivision
+    lane_riesenfeld_subdivision,
+    resample_polyline_cpp
 )
 
 
@@ -30,7 +32,8 @@ def smooth_polyline_subdivision(
         coarse_resampling: float = 2.0,
         max_curv: Optional[float] = None,
         max_dev: Optional[float] = None,
-        max_iter: Optional[int] = None
+        max_iter: int = 1000,
+        verbose: bool = False,
 ) -> np.ndarray:
     """
     Smooths a polyline using Lane-Riesenfeld curve subdivision.
@@ -41,13 +44,17 @@ def smooth_polyline_subdivision(
     :param polyline: input polyline
     :param degree: curve subdivision degree
     :param refinements: number of subdivision steps
-    :param coarse_resampling:
+    :param coarse_resampling: coarse resampling step in each iteration
     :param max_curv: maximum curvature for smoothing
-    :param max_dev: maximum deviation from ref path
-    :param max_iter: maximum number of smoothing iterations
+    :param max_dev: maximum lateral deviation from ref path
+    :param max_iter: maximum number of smoothing iterations (default 1000)
+    :param verbose: print output
     :return: smoothed polyline as np.ndarray
     """
     new_polyline = deepcopy(polyline)
+
+    # line string of original polyline
+    original_ls = LineString(polyline)
 
     # get max curvature
     max_curv = max_curv if max_curv is not None else 10.0
@@ -56,19 +63,42 @@ def smooth_polyline_subdivision(
     iter_cnt = 0
 
     # current maximum curvature
-    curr_max_curv = np.max(compute_curvature_from_polyline_python(new_polyline))
+    curr_max_curv = np.max(compute_curvature_from_polyline(new_polyline))
 
     # iterative smoothing
-    # TODO use max deviation ?
+    # Breaking conditions: curvature limit reached or max iterations reached
     while (curr_max_curv > max_curv) and (iter_cnt < max_iter):
         new_polyline = lane_riesenfeld_subdivision(new_polyline, degree, refinements)
 
+        # get current curvature
+        curv_arr = compute_curvature_from_polyline(new_polyline)
+
         # get max curvature
-        curr_max_curv = np.max(compute_curvature_from_polyline_python(new_polyline))
+        curr_max_curv = np.max(curv_arr)
+
+        # compute lateral deviation at point of maximum curvature
+        if max_dev is not None:
+            # get point of max curvature
+            idx_max_curv = np.argmax(curv_arr)
+            max_curv_pt = new_polyline[idx_max_curv]
+            # lateral distance to original polyline
+            deviation = Point(max_curv_pt).distance(original_ls)
 
         # resample with coarse step
-        new_polyline = resample_polyline(new_polyline, coarse_resampling)
+        new_polyline = resample_polyline_cpp(new_polyline, coarse_resampling)
+
+        # Optional breaking condition: max. lateral deviation is exceeded
+        if max_dev is not None and deviation > max_dev:
+            break
+
+        # increase counter
         iter_cnt += 1
+
+    # print summary
+    if verbose:
+        print(f"Number of iterations: {iter_cnt}")
+        if max_dev is not None:
+            print(f"Maximum lateral deviation: {deviation}")
 
     # postprocess: refine final polyline for smoothness
     new_polyline = lane_riesenfeld_subdivision(new_polyline, degree, refinements)
