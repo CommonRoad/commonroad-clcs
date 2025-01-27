@@ -5,9 +5,6 @@ from typing import List, Optional, Tuple
 # third party
 import numpy as np
 
-# commonroad
-from commonroad.common.validity import is_valid_polyline
-
 # commonroad-clcs
 import commonroad_clcs.pycrccosy as pycrccosy
 from commonroad_clcs.helper.interpolation import Interpolator
@@ -39,7 +36,6 @@ def chaikins_corner_cutting(
     :param refinements: how many times apply the chaikins corner cutting algorithm
     :return: smoothed polyline
     """
-    assert is_valid_polyline(polyline) and len(polyline) >= 3, "Provided polyline is invalid!"
     new_polyline = pycrccosy.Util.chaikins_corner_cutting(polyline, refinements)
     return np.array(new_polyline)
 
@@ -62,7 +58,6 @@ def lane_riesenfeld_subdivision(
     :param refinements: number of subdivision refinements
     :return: refined polyline
     """
-    assert is_valid_polyline(polyline) and len(polyline) >= 3, "Provided polyline is invalid!"
     new_polyline = pycrccosy.Util.lane_riesenfeld_subdivision(polyline, degree, refinements)
     return np.array(new_polyline)
 
@@ -74,8 +69,6 @@ def compute_pathlength_from_polyline(polyline: np.ndarray) -> np.ndarray:
     :param polyline: polyline with 2D points
     :return: path length of the polyline
     """
-    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
-        polyline[:, 0]) > 2, 'Polyline malformed for pathlength computation p={}'.format(polyline)
     distance = [0]
     for i in range(1, len(polyline)):
         distance.append(distance[i - 1] + np.linalg.norm(polyline[i] - polyline[i - 1]))
@@ -89,9 +82,6 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
     :param polyline: The polyline
     :return: The path length of the polyline
     """
-    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(polyline[:,0]) > 2, \
-        'Polyline malformed for path length computation p={}'.format(polyline)
-
     distance_between_points = np.diff(polyline, axis=0)
     # noinspection PyTypeChecker
     return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
@@ -117,8 +107,6 @@ def compute_curvature_from_polyline(polyline: np.ndarray, digits: int = 8) -> np
     :param digits: precision for curvature computation
     :return: The curvature of the polyline
     """
-    assert is_valid_polyline(polyline) and len(polyline) >= 3, "Polyline p={} is malformed!".format(polyline)
-
     curvature = pycrccosy.Util.compute_curvature(polyline, digits)
     return curvature
 
@@ -130,7 +118,6 @@ def compute_curvature_from_polyline_python(polyline: np.ndarray) -> np.ndarray:
     :param polyline: Polyline with 2D points [[x_0, y_0], [x_1, y_1], ...]
     :return: Curvature array of the polyline for each coordinate [1/rad]
     """
-    assert is_valid_polyline(polyline) and len(polyline) >= 3, "Polyline p={} is malformed!".format(polyline)
     pathlength = compute_pathlength_from_polyline(polyline)
 
     # compute first and second derivatives
