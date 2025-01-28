@@ -18,16 +18,13 @@ from commonroad_clcs.util import resample_polyline, chaikins_corner_cutting, \
     resample_polyline_adaptive, lane_riesenfeld_subdivision
 
 from commonroad_clcs.helper.smoothing import (
-    smooth_polyline_spline,
-    smooth_polyline_elastic_band,
     smooth_polyline_rdp,
-    smooth_polyline_subdivision
 )
-from commonroad_clcs.helper.visualization import plot_scenario_and_clcs, plot_segment_normal_tangent, \
-    plot_reference_curvature, plot_reference_path_partitions, plot_scenario_and_pp, plot_curvilinear_projection_domain
+from commonroad_clcs.helper.visualization import plot_scenario_and_clcs
 from commonroad_clcs.helper.evaluation import (
     evaluate_ref_path_deviations,
-    evaluate_ref_path_curvature_improvements
+    evaluate_ref_path_curvature_improvements,
+    plot_ref_path_curvature
 )
 # commonroad-route-planner
 from commonroad_route_planner.route_planner import RoutePlanner
@@ -55,8 +52,6 @@ scenario, planning_problem_set = CommonRoadFileReader(file_path).open()
 # retrieve the first planning problem in the problem set
 planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
-# plot_scenario_and_pp(scenario, planning_problem)
-
 
 # ********************************
 # Set plot settings for scenario
@@ -71,7 +66,7 @@ _columnwidth_in = 8.87 / 2.54
 _verbose = True
 
 # adaptive sampling
-_min_ds = 1.0
+_min_ds = 0.4
 _max_ds = 2.0
 
 if scenario_name == "USA_Lanker-2_5_T-1_mod2.xml":
@@ -153,7 +148,7 @@ if resample_fixed:
 
 
 # preprocess ref path for limiting curvature via curve subdivision
-max_curv_preprocess = False
+max_curv_preprocess = True
 degree_subdivision = 2
 
 if max_curv_preprocess:
@@ -217,7 +212,7 @@ if smooth_spline:
 
 
 # smoothing via elastic band optimization
-smooth_eb = True
+smooth_eb = False
 if smooth_eb:
     print("Smoothing via elastic band optimization...")
     # set params
@@ -247,7 +242,7 @@ if smooth_eb:
 ccosy_settings = {
     "default_limit": 40.0,
     "eps": 0.1,
-    "eps2": 1e-4,
+    "eps2": 2.0,
     "method": 2
 }
 
@@ -306,15 +301,23 @@ if evaluate_curvature:
     ref_pos_ccosy = compute_pathlength_from_polyline(ref_path_ccosy)
     ref_curv_ccosy = compute_curvature_from_polyline_python(ref_path_ccosy)
 
-    # plot
+    # plot curvatures
     fig, axs = plt.subplots(2)
     fig.set_figheight(4.5/2.54)
     fig.set_figwidth(_columnwidth_in)
-    plot_reference_curvature(ref_path_orig, ref_curv_orig, ref_pos_orig,
-                             label="original", axs=axs, color="black", linestyle="dashed")
-    plot_reference_curvature(ref_path_ccosy, ref_curv_ccosy, ref_pos_ccosy,
-                             label="adapted", axs=axs, color="green")
-    axs[0].legend()
+    plot_ref_path_curvature(
+        ref_path_orig,
+        axs=axs,
+        label="original",
+        color="black",
+        linestyle="dashed"
+    )
+    plot_ref_path_curvature(
+        ref_path_ccosy,
+        axs=axs,
+        label="adapted",
+        color="green"
+    )
     if show_plots:
         plt.show()
 

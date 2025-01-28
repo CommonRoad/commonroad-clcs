@@ -1,5 +1,9 @@
+# standard imports
+from typing import Optional
+
 # third party
 import numpy as np
+from matplotlib import pyplot as plt
 
 # commonroad-io
 from commonroad.common.util import make_valid_orientation
@@ -8,7 +12,52 @@ from commonroad.common.util import make_valid_orientation
 from commonroad_clcs.util import (
     compute_pathlength_from_polyline,
     compute_orientation_from_polyline,
+    compute_curvature_from_polyline_python,
 )
+
+
+def plot_ref_path_curvature(
+        reference_path: np.ndarray,
+        axs=None,
+        label: Optional[str] = None,
+        color: Optional[str] = None,
+        linestyle: Optional[str] = None,
+        savepath: Optional[str] = None
+):
+    """
+    Plots curvature and curvature derivative for a given reference path
+    :param reference_path: 2d numpy array
+    :param axs: Matplotlib axis object (if provided as argument)
+    :param label: plot label
+    :param color: plot color
+    :param linestyle: plot linestyle
+    :param savepath: full path to save figure
+    """
+    if axs is None:
+        fig, axs = plt.subplots(2)
+
+    # get reference states
+    # pathlength
+    ref_pos = compute_pathlength_from_polyline(reference_path)
+    # curvature
+    ref_curv = compute_curvature_from_polyline_python(reference_path)
+    # curvature derivative
+    ref_curv_d = np.gradient(ref_curv, ref_pos)
+
+    # plot curvature
+    axs[0].plot(ref_pos, ref_curv, label=label, color=color, linestyle=linestyle)
+    axs[0].set(xlabel="$s$", ylabel="$\kappa$")
+
+    # plot curvature 1st derivative
+    axs[1].plot(ref_pos, ref_curv_d, label=label, color=color, linestyle=linestyle)
+    axs[1].set(xlabel="$s$", ylabel="$\dot{\kappa}$")
+
+    # set legend
+    axs[0].legend()
+
+    if savepath:
+        plt.axis('on')
+        plt.savefig(savepath, format="svg", bbox_inches="tight", transparent=False)
 
 
 def evaluate_ref_path_curvature_improvements(ref_pos_orig, ref_curv_orig, ref_pos_mod, ref_curv_mod):

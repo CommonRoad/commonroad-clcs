@@ -258,43 +258,6 @@ def plot_segment_normal_tangent(clcs: CurvilinearCoordinateSystem, list_seg_idx:
     return list_p1, list_p2, list_n1, list_n2, list_t1, list_t2
 
 
-def plot_reference_curvature(reference_path: np.ndarray, curvature: np.ndarray,
-                             pathlength: np.ndarray = None, label: str = None, axs=None, marker: str = None,
-                             color: str = None, linestyle: str = None, savepath: str = None):
-    """
-    Plots curvature and curvature derivative for a given reference path
-    """
-    if pathlength is not None:
-        assert len(reference_path) == len(curvature) == len(pathlength), \
-            "Dimensions of reference path, curvature and pathlength arrays need to match"
-    else:
-        assert len(reference_path) == len(curvature), "Dimensions of reference path and curvature array must match"
-
-    if axs is None:
-        fig, axs = plt.subplots(2)
-
-    # get reference states
-    ref_pos = pathlength if pathlength is not None else compute_pathlength_from_polyline(reference_path)
-    ref_curv_d = np.gradient(curvature, ref_pos)
-    ref_curv_dd = np.gradient(ref_curv_d, ref_pos)
-
-    # plot curvature
-    axs[0].plot(ref_pos, curvature, label=label, marker=marker, color=color, linestyle=linestyle)
-    axs[0].set(xlabel="$s$", ylabel="$\kappa$")
-
-    # plot curvature 1st derivative
-    axs[1].plot(ref_pos, ref_curv_d, label=label, marker=marker, color=color, linestyle=linestyle)
-    axs[1].set(xlabel="$s$", ylabel="$\dot{\kappa}$")
-
-    # plot curvature 2nd derivative
-    # axs[2].plot(ref_pos[2:-3], ref_curv_dd[2:-3], label=label, marker=marker, color=color, linestyle=linestyle)
-    # axs[2].set(xlabel="$s$", ylabel="$\ddot{\kappa}$")
-
-    if savepath:
-        plt.axis('on')
-        plt.savefig(savepath, format="svg", bbox_inches="tight", transparent=False)
-
-
 def plot_reference_path_partitions(clcs: CurvilinearCoordinateSystem, rnd: MPRenderer):
     """
     Plots inflection points of the reference path and partitions of the reference path according to inflection points
