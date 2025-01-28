@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from commonroad.common.util import make_valid_orientation
 
 # commonroad-clcs
+from commonroad_clcs import pycrccosy
 from commonroad_clcs.util import (
     compute_pathlength_from_polyline,
     compute_orientation_from_polyline,
@@ -118,24 +119,54 @@ def compare_ref_path_curvatures(
     return metrics_dict
 
 
-def evaluate_ref_path_deviations(ref_path_orig: np.ndarray, ref_path_mod: np.ndarray, curvilinear_cosy):
-    """Evaluates average deviation of pathlength, lateral deviation and orientation deviation"""
-    # original
-    pathlength_orig = compute_pathlength_from_polyline(ref_path_orig)
-    orientation_orig = compute_orientation_from_polyline(ref_path_orig)
+def compare_ref_path_deviations(
+        ref_path_original: np.ndarray,
+        ref_path_modified: np.ndarray
+) -> Dict:
+    """
+    Computes deviation metrics of a modified reference path to its original reference path.
+    --------
+    Metrics:
+        - delta_s: change in overall path length
+        - delta_d_avg: average lateral deviation
+        - delta_d_max: maximum (absolute) lateral deviation
+        - delta_theta_avg: average orientation deviation
+        - delta_theta_max: maximum (absolute) orientation deviation
 
-    # modified
-    pathlength_mod = compute_pathlength_from_polyline(ref_path_mod)
-    orientation_mod = compute_orientation_from_polyline(ref_path_mod)
+    :param ref_path_original: Original reference path
+    :param ref_path_modified: Modified reference path
+    :return Dictionary with metrics
+    """
+    # original pathlength and orientation
+    pathlength_orig = compute_pathlength_from_polyline(ref_path_original)
+    orientation_orig = compute_orientation_from_polyline(ref_path_original)
+
+    # modified pathlength and orientation
+    pathlength_mod = compute_pathlength_from_polyline(ref_path_modified)
+    orientation_mod = compute_orientation_from_polyline(ref_path_modified)
 
     # list for d and theta deviation
     delta_d_list = list()
     delta_theta_list = list()
-    theta_interp_list = list()
 
-    # use ccosy
-    for i in range(len(ref_path_orig)):
-        vert = ref_path_orig[i]
+    # construct curvilinear coordinate system for modified reference path
+    _settings = {
+        "default_limit": 40.0,
+        "eps": 0.1,
+        "eps2": 2.0,
+        "method": 2
+    }
+    curvilinear_cosy = pycrccosy.CurvilinearCoordinateSystem(
+        ref_path_modified,
+        _settings["default_limit"],
+        _settings["eps"],
+        _settings["eps2"],
+        _settings["method"]
+    )
+
+    # calculate lateral deviation and orientation deviation
+    for i in range(len(ref_path_original)):
+        vert = ref_path_original[i]
         vert_converted = curvilinear_cosy.convert_to_curvilinear_coords(vert[0], vert[1])
         s = vert_converted[0]
         d = vert_converted[1]
@@ -146,17 +177,23 @@ def evaluate_ref_path_deviations(ref_path_orig: np.ndarray, ref_path_mod: np.nda
         if s_idx + 1 >= len(pathlength_mod):
             continue
 
-        theta_interpolated = _interpolate_angle(s,
-                                                pathlength_mod[s_idx], pathlength_mod[s_idx + 1],
-                                                orientation_mod[s_idx], orientation_mod[s_idx + 1])
-
-        theta_interp_list.append(theta_interpolated)
+        theta_interpolated = _interpolate_angle(
+            s,
+            pathlength_mod[s_idx],
+            pathlength_mod[s_idx + 1],
+            orientation_mod[s_idx],
+            orientation_mod[s_idx + 1]
+        )
 
         delta_theta_list.append(theta_interpolated - orientation_orig[i])
 
     delta_s = abs(pathlength_orig[-1] - pathlength_mod[-1])
     delta_d_avg = np.average(np.abs(delta_d_list))
     delta_theta_avg = np.average(np.abs(delta_theta_list))
+
+    res_dict = {
+
+    }
 
     return delta_s, delta_d_avg, delta_theta_avg
 
