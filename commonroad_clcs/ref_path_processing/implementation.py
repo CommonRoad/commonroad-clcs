@@ -61,14 +61,17 @@ class CurveSubdivisionProcessor(IReferencePathProcessor):
         # get params
         subdiv_params = self._params.subdivision
         resampling_params = self._params.resampling
+        _verbose = kwargs.get("verbose") if kwargs.get("verbose") is not None else False
 
         # curve subdivision smoothing
         new_polyline = smooth_polyline_subdivision(ref_path_input,
                                                    degree=subdiv_params.degree,
                                                    refinements=subdiv_params.num_refinements,
+                                                   coarse_resampling=subdiv_params.coarse_resampling_step,
                                                    max_curv=subdiv_params.max_curvature,
                                                    max_dev=subdiv_params.max_deviation,
-                                                   max_iter=subdiv_params.max_iterations)
+                                                   max_iter=subdiv_params.max_iterations,
+                                                   verbose=_verbose)
 
         # postprocess: resample final polyline according to resampling options
         return ResamplingProcessor.resample_path(new_polyline, resampling_params)
