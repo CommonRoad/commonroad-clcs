@@ -23,7 +23,7 @@ from commonroad_clcs.helper.smoothing import (
 from commonroad_clcs.helper.visualization import plot_scenario_and_clcs
 from commonroad_clcs.helper.evaluation import (
     evaluate_ref_path_deviations,
-    evaluate_ref_path_curvature_improvements,
+    compare_ref_path_curvatures,
     plot_ref_path_curvature
 )
 # commonroad-route-planner
@@ -321,21 +321,22 @@ if evaluate_curvature:
     if show_plots:
         plt.show()
 
-    ret_curv = evaluate_ref_path_curvature_improvements(ref_pos_orig, ref_curv_orig, ref_pos_ccosy, ref_curv_ccosy)
+    # evaluation
+    dict_curvature_metrics = compare_ref_path_curvatures(ref_path_orig, ref_path_ccosy)
     ret = evaluate_ref_path_deviations(ref_path_orig, ref_path_ccosy, curvilinear_cosy)
 
-    #
-    # print("##################")
-    # print("EVALUATION")
-    # print("##################")
-    # print("")
-    #
-    # print(f"Delta kappa average is: {ret_curv[0]}")
-    # print(f"Delta kappa dot average is: {ret_curv[1]}")
-    # print(f"Delta kappa max is: {ret_curv[2]}")
-    # print(f"Delta kappa dot max is: {ret_curv[3]}")
-    #
-    # print(f"Delta s is: {ret[0]}")
-    # print(f"Average delta d is: {ret[1]}")
-    # print(f"Average delta theta is: {ret[2]}")
+
+    print("##################")
+    print("EVALUATION")
+    print("##################")
+    print("")
+
+    print(f"Delta kappa average is: {dict_curvature_metrics['delta_kappa_avg']}")
+    print(f"Delta kappa dot average is: {dict_curvature_metrics['delta_kappa_dot_avg']}")
+    print(f"Delta kappa max is: {dict_curvature_metrics['delta_kappa_max']}")
+    print(f"Delta kappa dot max is: {dict_curvature_metrics['delta_kappa_dot_max']}")
+
+    print(f"Delta s is: {ret[0]}")
+    print(f"Average delta d is: {ret[1]}")
+    print(f"Average delta theta is: {ret[2]}")
 

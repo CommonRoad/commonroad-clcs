@@ -1,5 +1,5 @@
 # standard imports
-from typing import Optional
+from typing import Optional, Dict
 
 # third party
 import numpy as np
@@ -23,7 +23,7 @@ def plot_ref_path_curvature(
         color: Optional[str] = None,
         linestyle: Optional[str] = None,
         savepath: Optional[str] = None
-):
+) -> None:
     """
     Plots curvature and curvature derivative for a given reference path
     :param reference_path: 2d numpy array
@@ -60,41 +60,62 @@ def plot_ref_path_curvature(
         plt.savefig(savepath, format="svg", bbox_inches="tight", transparent=False)
 
 
-def evaluate_ref_path_curvature_improvements(ref_pos_orig, ref_curv_orig, ref_pos_mod, ref_curv_mod):
-    """Evaluates improvements of curvature and curvature rate of original and modified reference path"""
-    # compute kappa dots
+def compare_ref_path_curvatures(
+        ref_path_original: np.ndarray,
+        ref_path_modified: np.ndarray
+) -> Dict:
+    """
+    Compares curvature and curvature rates of an original and modified reference path
+    :param ref_path_original: Original reference path
+    :param ref_path_modified: Modified reference path
+    :return Dictionary with metrics
+    """
+    # pathlength
+    ref_pos_orig = compute_pathlength_from_polyline(ref_path_original)
+    ref_pos_mod = compute_pathlength_from_polyline(ref_path_modified)
+
+    # curvature
+    ref_curv_orig = compute_curvature_from_polyline_python(ref_path_original)
+    ref_curv_mod = compute_curvature_from_polyline_python(ref_path_modified)
+
+    # curvature derivative
     ref_curv_d_orig = np.gradient(ref_curv_orig, ref_pos_orig)
     ref_curv_d_mod = np.gradient(ref_curv_mod, ref_pos_mod)
 
-    # compute absolute averages
-    # original
+    # absolute curvature average
     ref_curv_avg_orig = np.average(np.abs(ref_curv_orig))
     ref_curv_avg_mod = np.average(np.abs(ref_curv_mod))
 
-    # modified
+    # absolute curvature derivative average
     ref_curv_d_avg_orig = np.average(np.abs(ref_curv_d_orig))
     ref_curv_d_avg_mod = np.average(np.abs(ref_curv_d_mod))
 
-    # compute absolute max values
-    # original
+    # absolut max curvature
     ref_curv_max_orig = np.max(np.abs(ref_curv_orig))
     ref_curv_max_mod = np.max(np.abs(ref_curv_mod))
 
-    # modified
+    # absolute max curvauture derivative
     ref_curv_d_max_orig = np.max(np.abs(ref_curv_d_orig))
     ref_curv_d_max_mod = np.max(np.abs(ref_curv_d_mod))
 
-    # compute Deltas
-    # average curvature
+    # delta average curvature
     delta_curv_avg = np.abs(ref_curv_avg_orig - ref_curv_avg_mod)
-    # average curvature rate
+    # delta average curvature rate
     delta_curv_d_avg = np.abs(ref_curv_d_avg_orig - ref_curv_d_avg_mod)
-
-    # maximum curvature
+    # delta maximum curvature
     delta_curv_max = np.abs(ref_curv_max_orig - ref_curv_max_mod)
+    # delta maximum curvature derivative
     delta_curv_d_max = np.abs(ref_curv_d_max_orig - ref_curv_d_max_mod)
 
-    return delta_curv_avg, delta_curv_d_avg, delta_curv_max, delta_curv_d_max
+    # result dictionary
+    metrics_dict = {
+        "delta_kappa_avg": delta_curv_avg,
+        "delta_kappa_dot_avg": delta_curv_d_avg,
+        "delta_kappa_max": delta_curv_max,
+        "delta_kappa_dot_max": delta_curv_d_max
+    }
+
+    return metrics_dict
 
 
 def evaluate_ref_path_deviations(ref_path_orig: np.ndarray, ref_path_mod: np.ndarray, curvilinear_cosy):
