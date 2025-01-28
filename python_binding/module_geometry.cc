@@ -47,6 +47,11 @@ PYBIND11_MODULE(pycrccosy, m) {
                     return ret_polyline;
                 });
 
+
+  mutil_geom.def("compute_pathlength",
+                 py::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computePathlength),
+                 py::arg("polyline"));
+
   mutil_geom.def("compute_curvature",
                  py::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computeCurvature),
                  py::arg("polyline"));
