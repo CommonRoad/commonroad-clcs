@@ -189,13 +189,20 @@ def compare_ref_path_deviations(
 
     delta_s = abs(pathlength_orig[-1] - pathlength_mod[-1])
     delta_d_avg = np.average(np.abs(delta_d_list))
+    delta_d_max = np.max(np.abs(delta_d_list))
     delta_theta_avg = np.average(np.abs(delta_theta_list))
+    delta_theta_max = np.max(np.abs(delta_theta_list))
 
-    res_dict = {
-
+    # metrics dictionary
+    metrics_dict = {
+        "delta_s": delta_s,
+        "delta_d_avg": delta_d_avg,
+        "delta_d_max": delta_d_max,
+        "delta_theta_avg": delta_theta_avg,
+        "delta_theta_max": delta_theta_max
     }
 
-    return delta_s, delta_d_avg, delta_theta_avg
+    return metrics_dict
 
 
 def _interpolate_angle(x: float, x1: float, x2: float, y1: float, y2: float) -> float:

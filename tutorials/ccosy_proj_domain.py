@@ -10,19 +10,22 @@ import time
 
 # commonroad-clcs
 from commonroad_clcs import pycrccosy
-from commonroad_clcs.config import CLCSParams, ProcessingOption, ResamplingOption
+from commonroad_clcs.config import (
+    CLCSParams,
+    ProcessingOption,
+    ResamplingOption
+)
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.util import resample_polyline, chaikins_corner_cutting, \
     compute_curvature_from_polyline, compute_pathlength_from_polyline, \
-    compute_curvature_from_polyline_python, \
-    resample_polyline_adaptive, lane_riesenfeld_subdivision
+    compute_curvature_from_polyline_python
 
 from commonroad_clcs.helper.smoothing import (
     smooth_polyline_rdp,
 )
 from commonroad_clcs.helper.visualization import plot_scenario_and_clcs
 from commonroad_clcs.helper.evaluation import (
-    evaluate_ref_path_deviations,
+    compare_ref_path_deviations,
     compare_ref_path_curvatures,
     plot_ref_path_curvature
 )
@@ -158,7 +161,7 @@ if max_curv_preprocess:
     params.subdivision.degree = degree_subdivision
     params.subdivision.num_refinements = 3
     params.subdivision.coarse_resampling_step = resampling_step
-    params.subdivision.max_curvature = 0.11
+    params.subdivision.max_curvature = scenario_max_curv
     params.subdivision.max_deviation = 1.3
     # resampling
     params.resampling.option = ResamplingOption.ADAPTIVE
@@ -323,20 +326,17 @@ if evaluate_curvature:
 
     # evaluation
     dict_curvature_metrics = compare_ref_path_curvatures(ref_path_orig, ref_path_ccosy)
-    ret = evaluate_ref_path_deviations(ref_path_orig, ref_path_ccosy, curvilinear_cosy)
-
+    dict_deviation_metrics = compare_ref_path_deviations(ref_path_orig, ref_path)
 
     print("##################")
     print("EVALUATION")
     print("##################")
     print("")
 
-    print(f"Delta kappa average is: {dict_curvature_metrics['delta_kappa_avg']}")
-    print(f"Delta kappa dot average is: {dict_curvature_metrics['delta_kappa_dot_avg']}")
-    print(f"Delta kappa max is: {dict_curvature_metrics['delta_kappa_max']}")
-    print(f"Delta kappa dot max is: {dict_curvature_metrics['delta_kappa_dot_max']}")
+    print("Curvature metrics:")
+    for k, v in dict_curvature_metrics.items():
+        print(f"\t {k}: \t {v}")
 
-    print(f"Delta s is: {ret[0]}")
-    print(f"Average delta d is: {ret[1]}")
-    print(f"Average delta theta is: {ret[2]}")
-
+    print("Deviation metrics:")
+    for k, v in dict_deviation_metrics.items():
+        print(f"\t {k}: \t {v}")
