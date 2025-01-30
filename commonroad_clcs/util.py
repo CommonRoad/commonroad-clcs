@@ -7,6 +7,8 @@ import numpy as np
 
 # commonroad-clcs
 import commonroad_clcs.pycrccosy as pycrccosy
+from numpy.fft.helper import ifftshift
+
 from commonroad_clcs.helper.interpolation import Interpolator
 
 
@@ -425,3 +427,156 @@ def reducePointsDP(cont, tol):
     keep = list(keep)
     keep.sort()
     return [cont[i] for i in keep]
+
+
+def remove_duplicated_points_from_polyline(polyline: np.ndarray) -> np.ndarray:
+    """Removes overlapping points from the input polyline"""
+    _, idx = np.unique(polyline, axis=0, return_index=True)
+    polyline = polyline[np.sort(idx)]
+
+    return polyline
+
+
+from commonroad.scenario.lanelet import LaneletNetwork
+def extend_reference_path(
+        reference_path: np.ndarray,
+        resample_step: float,
+        extend_front_length: float,
+        extend_back_length: float,
+        lanelet_network: LaneletNetwork
+) -> np.ndarray:
+    """
+    Extends a reference path at the front and back by a given length.
+    Note: The extended reference path is not necessarily C2 continuous and should be smoothed afterward.
+
+    :param reference_path: Original reference path
+    :param resample_step: desired resampling step of extended polyline
+    :param extend_front_length: length for front extension
+    :param extend_back_length: length for back extension
+    :param lanelet_network: Lanelet network from CommonRoad scenario
+    :return: extended reference path
+    """
+    # TODO currently only for front extension -> parameterize
+
+    # resample polyline initially
+    reference_path = resample_polyline(reference_path, step=resample_step)
+
+    # target reference path length after extension
+    target_length = compute_polyline_length(reference_path) + extend_front_length
+
+    # front extension after last point
+    last_pt = reference_path[-1]
+    # get lanelet
+    list_lanelet_ids = lanelet_network.find_lanelet_by_position(last_pt)
+    if list_lanelet_ids:
+        # Take first lanelet if multiple ones are found (unlikely)
+        last_lanelet = lanelet_network.find_lanelet_by_id(list_lanelet_ids[0])
+        center_vertices_curr = resample_polyline(
+            last_lanelet.center_vertices,
+            step=resample_step
+        )
+
+        # find closest point to last point
+        idx_closest_pt = np.argmin(
+            np.linalg.norm(center_vertices_curr - last_pt)
+        )
+
+        # remove all points including closest point
+        center_vertices_curr = center_vertices_curr[(idx_closest_pt + 1):]
+
+        # add center vertices to reference path
+        if center_vertices_curr.size > 0:
+            reference_path = np.concatenate((reference_path, center_vertices_curr), axis=0)
+
+        # set current length
+        curr_length = compute_polyline_length(reference_path)
+
+        # check if successor lanelets are available and extend ref path until desired length
+        next_lanelet = last_lanelet.successor[0] if last_lanelet.successor else None
+
+        # iterate over successor lanelets
+        while curr_length < target_length and next_lanelet:
+            center_vertices_next = resample_polyline(
+                next_lanelet.center_vertices,
+                step=resample_step
+            )
+
+            # check length
+            diff_length = target_length - curr_length
+
+            # pathlength of center vertices next
+            path_length_next = compute_pathlength_from_polyline(center_vertices_next)
+
+            # clip if length exceeds diff length
+            clip_idx = np.argwhere(path_length_next > diff_length)
+            center_vertices_next = center_vertices_next[(clip_idx - 1):]
+
+            # add center vertices to reference path
+            reference_path = np.concatenate((reference_path, center_vertices_next), axis=0)
+
+            # update current length
+            curr_length = compute_polyline_length(reference_path)
+
+            # get next lanelet (first lanelet in list)
+            next_lanelet = next_lanelet.successor[0] if next_lanelet.successor else None
+
+        # linear extrapolation if no successor lanelets are available and target length is not reached
+        if curr_length < target_length:
+            extrapolate_polyline(
+                polyline=reference_path,
+                distance=target_length - curr_length,
+                where="front",
+                resample_step=resample_step
+            )
+
+    # remove duplicates at end
+    reference_path = remove_duplicated_points_from_polyline(reference_path)
+    return reference_path
+
+
+# TODO differentiate between front and back (currently only front extension)
+def extrapolate_polyline(
+        polyline: np.ndarray,
+        distance: float,
+        where: str,
+        resample_step: float = 2.0,
+) -> np.ndarray:
+    """
+    Function to extrapolate the end of a polyline linearly by a given distance.
+    :param polyline: input polyline
+    :param distance: Distance to extend polyline
+    :param resample_step: interval for resampling
+    :param where: direction to extrapolate the polyline
+                - "front": extrapolates towards the front (starting at the last point)
+                - "back": extrapolates towards the back (starting at the first point)
+    :return extrapolated and resampled reference path
+    """
+    # check input polyline
+    assert (isinstance(polyline, np.ndarray) and
+            polyline.ndim == 2 and
+            len(polyline[:,0]) > 2), 'Input polyline mus be a numpy array with ndim ==2 and more than 2 points'
+
+    if where == "front":
+        # last two points
+        p1, p2 = polyline[-2], polyline[-1]
+        # direction vector
+        direction = p2 - p1
+        # extrapolated point
+        new_point = p2 + (direction / np.linalg.norm(direction)) * distance
+        # append new point to the last point
+        extended_polyline = np.vstack([polyline, new_point])
+
+    elif where == "back":
+        # first two points
+        p1, p2 = polyline[0], polyline[1]
+        # direction vector
+        direction = p1 - p2
+        # extrapolated point
+        new_point = p1 + (direction / np.linalg.norm(direction)) * distance
+        # append new point to the first point
+        extended_polyline = np.vstack([new_point, polyline])
+
+    else:
+        raise ValueError(f"Invalid argument where={where}. Use front or back.")
+
+    return resample_polyline(extended_polyline, step=resample_step)
