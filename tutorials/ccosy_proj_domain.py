@@ -16,9 +16,15 @@ from commonroad_clcs.config import (
     ResamplingOption
 )
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
-from commonroad_clcs.util import resample_polyline, chaikins_corner_cutting, \
-    compute_curvature_from_polyline, compute_pathlength_from_polyline, \
-    compute_curvature_from_polyline_python
+from commonroad_clcs.util import (
+    resample_polyline,
+    chaikins_corner_cutting,
+    compute_curvature_from_polyline,
+    compute_pathlength_from_polyline,
+    compute_curvature_from_polyline_python,
+    compute_polyline_length,
+    extend_reference_path
+)
 
 from commonroad_clcs.helper.smoothing import (
     smooth_polyline_rdp,
@@ -42,12 +48,9 @@ from commonroad.visualization.mp_renderer import MPRenderer
 # Load scenario
 # ***************************
 # load the CommonRoad scenario, note that you might have to modify the path to the CommonRoad scenario!
-# scenario_name = 'USA_Peach-3_1_T-1.xml'
-# scenario_name = "USA_Lanker-2_5_T-1_mod1.xml"
-
 # scenario_name = 'USA_Peach-2_1_T-1.xml'
-scenario_name = "ZAM_Tjunction-1_42_T-1.xml"
-# scenario_name = "USA_Lanker-2_5_T-1_mod2.xml"
+# scenario_name = "ZAM_Tjunction-1_42_T-1.xml"
+scenario_name = "USA_Lanker-2_5_T-1_mod2.xml"
 
 file_path = os.path.join(os.getcwd(), scenario_name)
 
@@ -75,7 +78,7 @@ _max_ds = 2.0
 if scenario_name == "USA_Lanker-2_5_T-1_mod2.xml":
     scenario.translate_rotate(translation=np.array([0, 0]), angle=np.pi/7)
     # planning_problem.initial_state.position[0] = -22.5
-    plot_limits = [-8, 21, -8, 39.0]
+    # plot_limits = [-8, 21, -8, 39.0]
     # plot limits big
     # plot_limits = [-27, 43.2, -22.9, 52.8]
     scenario_max_curv = 0.062
@@ -84,13 +87,13 @@ if scenario_name == "USA_Lanker-2_5_T-1_mod2.xml":
     # boundary_lanelet_ids = ["3450", "3604", "3517"]
 
 if scenario_name == "USA_Peach-2_1_T-1.xml":
-    plot_limits = [-40.32, -7, 26, 80]
+    # plot_limits = [-40.32, -7, 26, 80]
     scenario_max_curv = 0.138
     savepath = os.path.join(os.getcwd(), "output/USA_Peach-2_1_T-1.svg")
     savepath_curvature = os.path.join(os.getcwd(), "output/USA_Peach-2_1_T-1_curvature.svg")
 
 if scenario_name == "ZAM_Tjunction-1_42_T-1.xml":
-    plot_limits = [-6, 34.105, -10, 55]
+    # plot_limits = [-6, 34.105, -10, 55]
     scenario_max_curv = 0.125
     savepath = os.path.join(os.getcwd(), "output/ZAM_Tjunction-1_42_T-1.svg")
     savepath_curvature = os.path.join(os.getcwd(), "output/ZAM_Tjunction-1_42_T-1_curvature.svg")
@@ -121,6 +124,20 @@ print("\tPlanning routes took: \t", time.time() - time_start)
 # store original ref path for later
 ref_path_orig = deepcopy(ref_path)
 
+
+# TODO test ref path extension
+# TODO it is advised to simplify polyline via RDP and resample beforehand
+
+ref_path = extend_reference_path(
+    reference_path=resample_polyline(ref_path, 1.0),
+    resample_step=1.0,
+    extend_front_length=50.0,
+    extend_back_length=10.0,
+    lanelet_network=scenario.lanelet_network
+)
+
+print(f"Length before extension: {compute_polyline_length(resample_polyline(ref_path_orig, 1.0))}")
+print(f"Length after extension: {compute_polyline_length(ref_path)}")
 
 # *******************************************
 # Pre-Processing options on reference path
@@ -162,7 +179,7 @@ if max_curv_preprocess:
     params.subdivision.num_refinements = 3
     params.subdivision.coarse_resampling_step = resampling_step
     params.subdivision.max_curvature = scenario_max_curv
-    params.subdivision.max_deviation = 1.3
+    params.subdivision.max_deviation = 10.0
     # resampling
     params.resampling.option = ResamplingOption.ADAPTIVE
     params.resampling.min_step = _min_ds
@@ -241,11 +258,11 @@ if smooth_eb:
 # ***************************
 # Curvilinear CoSys
 # ***************************
-# create curvilinear CoSys ref_path after preprocessing/spline smoothing
+# create curvilinear CoSys ref_path after preprocessing
 ccosy_settings = {
     "default_limit": 40.0,
     "eps": 0.1,
-    "eps2": 2.0,
+    "eps2": 1e-2,
     "method": 2
 }
 

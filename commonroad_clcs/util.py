@@ -5,9 +5,11 @@ from typing import List, Optional, Tuple
 # third party
 import numpy as np
 
+# commonroad
+from commonroad.scenario.lanelet import LaneletNetwork
+
 # commonroad-clcs
 import commonroad_clcs.pycrccosy as pycrccosy
-from numpy.fft.helper import ifftshift
 
 from commonroad_clcs.helper.interpolation import Interpolator
 
@@ -437,104 +439,203 @@ def remove_duplicated_points_from_polyline(polyline: np.ndarray) -> np.ndarray:
     return polyline
 
 
-from commonroad.scenario.lanelet import LaneletNetwork
-def extend_reference_path(
+def append_lanelet_centerpoints(
         reference_path: np.ndarray,
         resample_step: float,
-        extend_front_length: float,
-        extend_back_length: float,
+        max_distance: float,
+        where: str,
         lanelet_network: LaneletNetwork
 ) -> np.ndarray:
     """
-    Extends a reference path at the front and back by a given length.
-    Note: The extended reference path is not necessarily C2 continuous and should be smoothed afterward.
+    Extends a reference path up to a given maximum distance by appending the centerpoints of successor/predecessor
+    lanelets.
 
-    :param reference_path: Original reference path
-    :param resample_step: desired resampling step of extended polyline
-    :param extend_front_length: length for front extension
-    :param extend_back_length: length for back extension
+    :param reference_path: input reference path
+    :param resample_step: desired resampling step
+    :param max_distance: maximum distance for appending center points
+    :param where: direction to append centerpoints to lanelet
+                - "front": appends centerpoints of successor lanelets towards the front (starting at the last point)
+                - "back": appends centerpoints of predecessor lanelets towards the back (starting at the first point)
     :param lanelet_network: Lanelet network from CommonRoad scenario
-    :return: extended reference path
+    :return: new reference path
     """
-    # TODO currently only for front extension -> parameterize
+    # check validity
+    assert where in ["front", "back"], f"Invalid argument for where={where}"
 
-    # resample polyline initially
-    reference_path = resample_polyline(reference_path, step=resample_step)
+    # current length and target length
+    curr_length = compute_polyline_length(reference_path)
+    max_length = curr_length + max_distance
 
-    # target reference path length after extension
-    target_length = compute_polyline_length(reference_path) + extend_front_length
+    # determine starting lanelet (lanelet of first or last point of reference path)
+    start_pt = reference_path[-1] if where == "front" else reference_path[0]
+    list_start_lanelet_ids = lanelet_network.find_lanelet_by_position([start_pt])
 
-    # front extension after last point
-    last_pt = reference_path[-1]
-    # get lanelet
-    list_lanelet_ids = lanelet_network.find_lanelet_by_position(last_pt)
-    if list_lanelet_ids:
-        # Take first lanelet if multiple ones are found (unlikely)
-        last_lanelet = lanelet_network.find_lanelet_by_id(list_lanelet_ids[0])
-        center_vertices_curr = resample_polyline(
-            last_lanelet.center_vertices,
+    if list_start_lanelet_ids and list_start_lanelet_ids[0]:
+        # take first lanelet in list
+        start_lanelet = lanelet_network.find_lanelet_by_id(list_start_lanelet_ids[0][0])
+
+        # get center vertices
+        center_vertices  = resample_polyline(
+            start_lanelet.center_vertices,
             step=resample_step
         )
 
-        # find closest point to last point
+        # find the closest point to start point
         idx_closest_pt = np.argmin(
-            np.linalg.norm(center_vertices_curr - last_pt)
+            np.linalg.norm(center_vertices - start_pt, axis=1)
         )
 
-        # remove all points including closest point
-        center_vertices_curr = center_vertices_curr[(idx_closest_pt + 1):]
+        # remove all points including the closest point
+        center_vertices = (
+            center_vertices[(idx_closest_pt + 1):] if where == "front"
+            else center_vertices[:(max(0, idx_closest_pt - 1))]
+        )
 
         # add center vertices to reference path
-        if center_vertices_curr.size > 0:
-            reference_path = np.concatenate((reference_path, center_vertices_curr), axis=0)
+        if center_vertices.size > 0:
+            reference_path = (
+                np.concatenate((reference_path, center_vertices), axis=0) if where == "front"
+                else np.concatenate((center_vertices, reference_path), axis=0)
+            )
 
-        # set current length
+        # compute current length
         curr_length = compute_polyline_length(reference_path)
 
-        # check if successor lanelets are available and extend ref path until desired length
-        next_lanelet = last_lanelet.successor[0] if last_lanelet.successor else None
+        # get next (successor or predecessor) lanelet
+        if where == "front":
+            next_lanelet = (
+                lanelet_network.find_lanelet_by_id(start_lanelet.successor[0]) if start_lanelet.successor
+                else None
+            )
+        else:
+            next_lanelet = (
+                lanelet_network.find_lanelet_by_id(start_lanelet.predecessor[0]) if start_lanelet.predecessor
+                else None
+            )
 
-        # iterate over successor lanelets
-        while curr_length < target_length and next_lanelet:
-            center_vertices_next = resample_polyline(
+        # iterate over next lanelets
+        while next_lanelet is not None and curr_length < max_length:
+            # get center vertices
+            center_vertices = resample_polyline(
                 next_lanelet.center_vertices,
                 step=resample_step
             )
 
             # check length
-            diff_length = target_length - curr_length
+            diff_length = max_length - curr_length
 
-            # pathlength of center vertices next
-            path_length_next = compute_pathlength_from_polyline(center_vertices_next)
+            # path length of center vertices next lanelet
+            path_length_next = compute_pathlength_from_polyline(center_vertices)
 
-            # clip if length exceeds diff length
-            clip_idx = np.argwhere(path_length_next > diff_length)
-            center_vertices_next = center_vertices_next[(clip_idx - 1):]
+            # case extension to front
+            if where == "front":
+                # clip center vertices if length exceeds diff length
+                clip_idx = np.argmax(path_length_next > diff_length)
+                center_vertices = center_vertices[:(max(0, clip_idx - 1))]
+                # append center vertices to reference path
+                reference_path = np.concatenate((reference_path, center_vertices), axis=0)
+                # get next lanelet
+                next_lanelet = (
+                    lanelet_network.find_lanelet_by_id(next_lanelet.successor[0]) if next_lanelet.successor
+                    else None
+                )
 
-            # add center vertices to reference path
-            reference_path = np.concatenate((reference_path, center_vertices_next), axis=0)
+            # case extension to back
+            elif where == "back":
+                # clip center vertices if length exceeds diff length
+                clip_idx = np.argmax(path_length_next > path_length_next[-1] - diff_length)
+                center_vertices = center_vertices[(max(0, clip_idx - 1)):]
+                # append center vertices to reference path
+                reference_path = np.concatenate((center_vertices, reference_path), axis=0)
+                # get next lanelet
+                next_lanelet = (
+                    lanelet_network.find_lanelet_by_id(next_lanelet.predecessor[0]) if next_lanelet.predecessor
+                    else None
+                )
 
             # update current length
             curr_length = compute_polyline_length(reference_path)
 
-            # get next lanelet (first lanelet in list)
-            next_lanelet = next_lanelet.successor[0] if next_lanelet.successor else None
+    return reference_path
 
-        # linear extrapolation if no successor lanelets are available and target length is not reached
-        if curr_length < target_length:
-            extrapolate_polyline(
-                polyline=reference_path,
-                distance=target_length - curr_length,
-                where="front",
-                resample_step=resample_step
-            )
 
-    # remove duplicates at end
+def extend_reference_path(
+        reference_path: np.ndarray,
+        resample_step: float,
+        extend_front_length: float,
+        extend_back_length: float,
+        lanelet_network: Optional[LaneletNetwork] = None
+) -> np.ndarray:
+    """
+    Extends a reference path at the front and back by a given length.
+    Note: The extended reference path is resampled uniformly and not necessarily C2 continuous.
+          Post-processing / smoothing should be done afterward.
+
+    :param reference_path: Original reference path
+    :param resample_step: desired resampling step of extended polyline
+    :param extend_front_length: length for front extension
+    :param extend_back_length: length for back extension
+    :param lanelet_network: Lanelet network from CommonRoad scenario to extend using lanelet centerpoints (optional)
+    :return: extended reference path
+    """
+    # resample polyline initially
+    reference_path = resample_polyline(reference_path, step=resample_step)
+
+    # ----------- front extension
+    # target reference path length
+    target_length = compute_polyline_length(reference_path) + extend_front_length
+
+    # append lanelet centerpoints for front extension
+    reference_path = append_lanelet_centerpoints(
+        reference_path,
+        resample_step=resample_step,
+        max_distance=extend_front_length,
+        where="front",
+        lanelet_network=lanelet_network
+    )
+
+    # update current length
+    curr_length = compute_polyline_length(reference_path)
+
+    # linear extrapolation in front if target length is not yet reached
+    if curr_length < target_length:
+        reference_path = extrapolate_polyline(
+            polyline=reference_path,
+            distance=target_length - curr_length,
+            where="front",
+            resample_step=resample_step
+        )
+
+    # ----------- back extension
+    # target reference path length
+    target_length = compute_polyline_length(reference_path) + extend_back_length
+
+    # append lanelet centerpoints for back extension
+    reference_path = append_lanelet_centerpoints(
+        reference_path,
+        resample_step=resample_step,
+        max_distance=extend_back_length,
+        where="back",
+        lanelet_network=lanelet_network
+    )
+
+    # update current length
+    curr_length = compute_polyline_length(reference_path)
+
+    # linear extrapolation behind if target length is not yet reached
+    if curr_length < target_length:
+        reference_path = extrapolate_polyline(
+            polyline=reference_path,
+            distance=target_length - curr_length,
+            where="back",
+            resample_step=resample_step
+        )
+
+    # remove potential duplicate points
     reference_path = remove_duplicated_points_from_polyline(reference_path)
     return reference_path
 
 
-# TODO differentiate between front and back (currently only front extension)
 def extrapolate_polyline(
         polyline: np.ndarray,
         distance: float,
