@@ -66,6 +66,6 @@ If you use our software for research, please cite:
 ```
 
 #### Additional references:
-[1] `Héry, Elwan, Stefano Masi, Philippe Xu, and Philippe Bonnifait. "Map-based curvilinear coordinates for autonomous vehicles." In IEEE 20th International Conference on Intelligent Transportation Systems (ITSC), pp. 1-7, 2017. <https://ieeexplore.ieee.org/document/8317775>`_
+[1] [Héry, Elwan, Stefano Masi, Philippe Xu, and Philippe Bonnifait. "Map-based curvilinear coordinates for autonomous vehicles." ITSC, 2017](https://ieeexplore.ieee.org/document/8317775)
 
-[2] `Bender, Philipp, Julius Ziegler, and Christoph Stiller. "Lanelets: Efficient map representation for autonomous driving." In IEEE Intelligent Vehicles Symposium Proceedings, pp. 420-425, 2014. <https://ieeexplore.ieee.org/document/6856487>`_
+[2] [Bender, Philipp, Julius Ziegler, and Christoph Stiller. "Lanelets: Efficient map representation for autonomous driving." IV, 2014](https://ieeexplore.ieee.org/document/6856487)
