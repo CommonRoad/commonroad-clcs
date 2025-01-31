@@ -383,7 +383,6 @@ def reducePointsDP(cont, tol):
     while stack:
         anchor, floater = stack.pop()
         # initialize line segment
-        # if cont[floater] != cont[anchor]:
         if cont[floater][0] != cont[anchor][0] or cont[floater][1] != cont[anchor][1]:
             anchorX = float(cont[floater][0] - cont[anchor][0])
             anchorY = float(cont[floater][1] - cont[anchor][1])
