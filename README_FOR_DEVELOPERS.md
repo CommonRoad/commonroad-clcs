@@ -59,7 +59,18 @@ Flags:
 - `-e` editable install 
 
 
-## Debugging with an IDE
+## Debugging the code
+1. Install in editable mode using the CMake Debug build flag:
+```bash
+pip install -v --no-build-isolation --config-settings=editable.rebuild=true --config-settings=cmake.build-type="Debug" -e .
+```
+
+2. Launch the Python interpreter together with a C++ debugger (e.g., GDB):
+```bash
+gdb -ex r --args python compute_reachable_set.py
+```
+
+
 
 
 ## Running Unit Tests
