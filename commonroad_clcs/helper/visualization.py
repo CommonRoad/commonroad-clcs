@@ -160,9 +160,8 @@ def plot_scenario_and_clcs(
 
     # draw params general
     rnd.draw_params.time_begin = 0 if time_step is None else time_step
-    rnd.draw_params.dynamic_obstacle.draw_icon = True
+    rnd.draw_params.dynamic_obstacle.draw_shape = False
     rnd.draw_params.dynamic_obstacle.trajectory.draw_trajectory = False
-
     # draw params planning problem
     rnd.draw_params.planning_problem.initial_state.state.draw_arrow = False
 
