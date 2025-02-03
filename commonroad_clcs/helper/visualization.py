@@ -131,11 +131,18 @@ def _make_proj_domain_polygon(clcs: CurvilinearCoordinateSystem, which: str) -> 
     return proj_domain_polygon
 
 
-def plot_scenario_and_clcs(scenario: Scenario = None, clcs: CurvilinearCoordinateSystem = None,
-                           planning_problem: Optional[PlanningProblem] = None, renderer: Optional[MPRenderer] = None,
-                           show: bool = False, lanelet_network: Optional[LaneletNetwork] = None,
-                           proj_domain_plot: Optional[str] = "full", proj_domain_vertices: bool = False,
-                           plot_ref_path: bool = True):
+def plot_scenario_and_clcs(
+        scenario: Scenario = None,
+        clcs: CurvilinearCoordinateSystem = None,
+        planning_problem: Optional[PlanningProblem] = None,
+        renderer: Optional[MPRenderer] = None,
+        show: bool = False,
+        lanelet_network: Optional[LaneletNetwork] = None,
+        proj_domain_plot: Optional[str] = "full",
+        proj_domain_vertices: bool = False,
+        plot_ref_path: bool = True,
+        time_step: Optional[int] = None
+):
     """
     Plots a scenario and given Curvilinear Coordinate system (CLCS). The CLCS is visualized with the reference path and
     the corresponding unique projection domain.
@@ -152,8 +159,8 @@ def plot_scenario_and_clcs(scenario: Scenario = None, clcs: CurvilinearCoordinat
     rnd = renderer if renderer is not None else MPRenderer(figsize=(7, 10))
 
     # draw params general
-    rnd.draw_params.time_begin = 0
-    rnd.draw_params.dynamic_obstacle.draw_shape = False
+    rnd.draw_params.time_begin = 0 if time_step is None else time_step
+    rnd.draw_params.dynamic_obstacle.draw_icon = True
     rnd.draw_params.dynamic_obstacle.trajectory.draw_trajectory = False
 
     # draw params planning problem
