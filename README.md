@@ -5,9 +5,7 @@ vehicles. Curvilinear frames are aligned with a reference path and Cartesian poi
 coordinates (s, d), where s is the arc length and d the lateral deviation to the reference path.
 This transformation can be performed via different projection methods [1] [2].
 
-<p align="center">
-    <img src="docs/assets/animation.gif" alt="clcs" width="500"/>
-</p>
+<img src="docs/assets/animation.gif" alt="clcs" width="500"/>
 
 This project software for constructing and using curvilinear coordinate frames for reference paths given as polylines.
 We offer:
