@@ -79,8 +79,6 @@ std::tuple<bool, bool> ProjectionDomain::curvilinearPointInProjectionDomain(cons
         double l_max = curvilinear_points[0].y() + (curvilinear_points[1].y() - curvilinear_points[0].y()) * lambda_s;
         double l_min = curvilinear_points[2].y() + (curvilinear_points[3].y() - curvilinear_points[2].y()) * lambda_s;
 
-        std::cout << "lambda_s: " << lambda_s << ", l_min: " << l_min << ", l_max: " << l_max << ", l: " << l << ", seg_idx: " << seg_idx << std::endl;
-
         // check coordinate in interval
         if ((l < l_min) || (l > l_max)) {
             in_lateral_bounds = false;
