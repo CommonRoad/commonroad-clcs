@@ -27,9 +27,7 @@ from commonroad_clcs.pycrccosy import CurvilinearCoordinateSystem
 
 from commonroad_clcs.util import (
     compute_pathlength_from_polyline,
-    compute_curvature_from_polyline,
     get_inflection_points,
-    compute_curvature_from_polyline_python
 )
 
 
@@ -206,64 +204,6 @@ def plot_scenario_and_clcs(
         plt.show()
 
 
-def plot_segment_normal_tangent(clcs: CurvilinearCoordinateSystem, list_seg_idx: Optional[list] = None,
-                                max_scale: Optional[float] = None, curvature_arr: Optional[np.ndarray] = None,
-                                renderer: Optional[MPRenderer] = None, plot_normals: bool = True,
-                                plot_tangents: bool = True, annotate_seg_idx: bool = True, show: bool = False):
-    # create renderer if not given
-    rnd = renderer if renderer is not None else MPRenderer(figsize=(7, 10))
-
-    # get list of segments in CLCS
-    list_segments = clcs.get_segment_list()
-    # get reference path
-    ref_path = np.array(clcs.reference_path())
-    # set scaling of normals and tangents
-    _scale = max_scale if max_scale is not None else 10.0
-
-    # precision value for normal length
-    _eps = 0.05
-
-    # initialize based points, normals and tangents
-    list_p1 = list()
-    list_p2 = list()
-    list_n1 = list()
-    list_n2 = list()
-    list_t1 = list()
-    list_t2 = list()
-
-    # set segment idx to plot
-    _seg_idx = list_seg_idx if list_seg_idx is not None else range(len(list_segments))
-
-    for idx in _seg_idx:
-        if curvature_arr is not None:
-            _scale = min(1/curvature_arr[idx] + 0.01, max_scale)
-        seg = list_segments[idx]
-        list_p1.append(seg.pt_1)
-        list_p2.append(seg.pt_2)
-        # list_n1.append(list_p1[-1] + _scale * seg.normal_segment_start)
-        list_n2.append(list_p2[-1] + _scale * seg.normal_segment_end)
-        list_t1.append(list_p1[-1] + _scale/2 * seg.tangent_segment_start)
-        list_t2.append(list_p2[-1] + _scale/2 * seg.tangent_segment_end)
-        if annotate_seg_idx:
-            rnd.ax.annotate(idx, (ref_path[idx, 0], ref_path[idx, 1]), zorder=100)
-
-    if plot_normals:
-        for i, n1 in enumerate(list_n1):
-            rnd.ax.plot([list_p1[i][0], n1[0]], [list_p1[i][1], n1[1]], zorder=100, color=_my_colors["normal_vectors"])
-        for i, n2 in enumerate(list_n2):
-            rnd.ax.plot([list_p2[i][0], n2[0]], [list_p2[i][1], n2[1]], zorder=100, color=_my_colors["normal_vectors"])
-    if plot_tangents:
-        for i, t1 in enumerate(list_t1):
-            rnd.ax.plot([list_p1[i][0], t1[0]], [list_p1[i][1], t1[1]], zorder=100, color=_my_colors["tangent_vectors"])
-        for i, t2 in enumerate(list_t2):
-            rnd.ax.plot([list_p2[i][0], t2[0]], [list_p2[i][1], t2[1]], zorder=100, color=_my_colors["tangent_vectors"])
-
-    if show:
-        plt.show()
-
-    return list_p1, list_p2, list_n1, list_n2, list_t1, list_t2
-
-
 def plot_reference_path_partitions(clcs: CurvilinearCoordinateSystem, rnd: MPRenderer):
     """
     Plots inflection points of the reference path and partitions of the reference path according to inflection points
@@ -291,6 +231,7 @@ def plot_reference_path_partitions(clcs: CurvilinearCoordinateSystem, rnd: MPRen
 
 
 def plot_scenario_and_pp(scenario, planning_problem = None):
+    """Plots only scenario and planning problem"""
     # create renderer if not given
     rnd = MPRenderer(figsize=(7, 10))
 
