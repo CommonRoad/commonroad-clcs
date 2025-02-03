@@ -47,7 +47,10 @@ bool ProjectionDomain::cartesianPointInProjectionDomain(double x, double y) cons
 }
 
 std::tuple<bool, bool> ProjectionDomain::curvilinearPointInProjectionDomain(const std::unique_ptr<Segment>& segment_ptr,
-                                                                            int seg_idx, double s, double l) const {
+                                                                            int seg_idx,
+                                                                            const double seg_lon_coord,
+                                                                            double s,
+                                                                            double l) const {
     bool in_longitudinal_bounds = true;
     bool in_lateral_bounds = true;
 
@@ -65,16 +68,18 @@ std::tuple<bool, bool> ProjectionDomain::curvilinearPointInProjectionDomain(cons
         pt[1] = this->upper_projection_domain_border_[seg_idx];
         pt[2] = this->lower_projection_domain_border_[seg_idx - 1];
         pt[3] = this->lower_projection_domain_border_[seg_idx];
-        double lambda;
+        double lambda{0.0};
         EigenPolyline curvilinear_points(4);
         for (int i = 0; i < 4; i++) {
             Eigen::Vector2d curv_pt = segment_ptr->convertToCurvilinearCoords(pt[i].x(), pt[i].y(), lambda);
             curvilinear_points[i] = curv_pt;
         }
         // get lateral interval
-        double lambda_s = segment_ptr->computeLambda(s);
+        double lambda_s = segment_ptr->computeLambda(s - seg_lon_coord);
         double l_max = curvilinear_points[0].y() + (curvilinear_points[1].y() - curvilinear_points[0].y()) * lambda_s;
         double l_min = curvilinear_points[2].y() + (curvilinear_points[3].y() - curvilinear_points[2].y()) * lambda_s;
+
+        std::cout << "lambda_s: " << lambda_s << ", l_min: " << l_min << ", l_max: " << l_max << ", l: " << l << ", seg_idx: " << seg_idx << std::endl;
 
         // check coordinate in interval
         if ((l < l_min) || (l > l_max)) {

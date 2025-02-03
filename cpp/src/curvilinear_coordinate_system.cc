@@ -655,7 +655,8 @@ std::tuple<bool, bool> CurvilinearCoordinateSystem::curvilinearPointInProjection
 std::tuple<bool, bool> CurvilinearCoordinateSystem::curvilinearPointInProjectionDomain(
         int seg_idx, double s, double l) const {
     const auto &segment = this->path_segments_ptr->getSegmentByID(seg_idx);
-    return this->projection_domain_ptr->curvilinearPointInProjectionDomain(segment, seg_idx, s, l);
+    const auto seg_lon_coord = this->segmentsLongitudinalCoordinates()[seg_idx];
+    return this->projection_domain_ptr->curvilinearPointInProjectionDomain(segment, seg_idx, seg_lon_coord, s, l);
 }
 
 std::vector<EigenPolyline> CurvilinearCoordinateSystem::determineSubsetOfPolygonWithinProjectionDomain(

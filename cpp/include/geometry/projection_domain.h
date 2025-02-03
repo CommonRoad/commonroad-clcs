@@ -84,13 +84,16 @@ public:
      * Checks if a curvilinear point is within the unique curvilinear projection
      *
      * @param segment_ptr pointer to segment
-     * @param seg_idx ID of longitudinal segment
+     * @param seg_idx ID of segment
+     * @param seg_lon_coord longitudinal coordinate of segment start
      * @param s longitudinal coordinate in the curvilinear coordinate system
      * @param l lateral coordinate in the curvilinear coordinate system
      * @return <true,true>, if the point is within the lon. and lat. bounds of the curvilinear projection domain
      */
     std::tuple<bool, bool> curvilinearPointInProjectionDomain(const std::unique_ptr<Segment>& segment_ptr,
-                                                              int seg_idx, double s, double l) const;
+                                                              int seg_idx,
+                                                              const double seg_lon_coord,
+                                                              double s, double l) const;
 
     /**
      * Computes the parts of a polygon which are inside the Cartesian or Curvilinear unique projection
