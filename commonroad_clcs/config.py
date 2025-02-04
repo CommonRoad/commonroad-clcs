@@ -202,7 +202,7 @@ class CLCSParams(BaseParam):
     # flag deciding whether to compute the projection domain polygon and check containment before transforming a point
     use_proj_domain: bool = True
     # default limit
-    default_proj_domain_limit: float = 30.0
+    default_proj_domain_limit: float = 40.0
     # tolerance projection domain computation
     eps: float = 0.1
     # extension reference path at start and end
