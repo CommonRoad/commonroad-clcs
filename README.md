@@ -3,7 +3,8 @@
 Curvilinear coordinate frames (also Frenet frames) are a widely used representation in motion planning for automated
 vehicles. Curvilinear frames are aligned with a reference path and Cartesian points (x, y) are described by 
 coordinates (s, d), where s is the arc length and d the lateral deviation to the reference path.
-This transformation can be performed via different projection methods [1] [2].
+The coordinate transformation is performed via a projection on the reference path for which different methods can be 
+used [1] [2].
 
 <img src="docs/assets/animation.gif" alt="clcs" width="500"/>
 
