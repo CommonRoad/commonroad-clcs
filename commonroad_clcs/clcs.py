@@ -63,9 +63,9 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
 
         # pre-compute reference path attributes
         self._reference_path = np.asarray(super().reference_path())
-        self._ref_pos = compute_pathlength_from_polyline(self.reference_path)
-        self._ref_theta = np.unwrap(compute_orientation_from_polyline(self.reference_path))
-        self._ref_curv = compute_curvature_from_polyline_python(self.reference_path)
+        self._ref_pos = compute_pathlength_from_polyline(self.ref_path)
+        self._ref_theta = np.unwrap(compute_orientation_from_polyline(self.ref_path))
+        self._ref_curv = compute_curvature_from_polyline_python(self.ref_path)
         self._ref_curv_d = np.gradient(self._ref_curv, self.ref_pos)
         super().set_curvature(self.ref_curv)
 
@@ -96,7 +96,7 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
         self.__dict__ = state[1]
 
     @property
-    def reference_path(self) -> np.ndarray:
+    def ref_path(self) -> np.ndarray:
         """returns reference path used by CCosy due to slight modifications within the CCosy module"""
         return self._reference_path
 
