@@ -211,7 +211,7 @@ class CLCSParams(BaseParam):
     # extrapolation distance of reference path forward/backward
     # avoids projection errors if ego vehicle is close to ref path start/end
     extrapolate_forward_dist: float = 10.0
-    extrapolate_backward_dist: float = 3.0
+    extrapolate_backward_dist: float = 5.0
 
     # parameter sub classes
     resampling: ResamplingParams = field(default_factory=ResamplingParams)
