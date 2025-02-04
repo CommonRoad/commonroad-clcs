@@ -3,78 +3,102 @@ from typing import Optional
 import numpy as np
 from matplotlib import pyplot as plt
 
-import commonroad_clcs.pycrccosy as pycrccosy
-from commonroad_clcs.util import (
-    chaikins_corner_cutting,
-    resample_polyline,
-    compute_polyline_length,
-    compute_pathlength_from_polyline,
-    compute_orientation_from_polyline
+from commonroad.common.validity import (
+    ValidTypes,
+    is_valid_orientation
 )
+
+import commonroad_clcs.pycrccosy as pycrccosy
+
+from commonroad_clcs.config import CLCSParams
+from commonroad_clcs.util import (
+    compute_pathlength_from_polyline,
+    compute_orientation_from_polyline,
+    remove_duplicated_points_from_polyline, compute_curvature_from_polyline_python
+)
+from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 
 
 class RefPathLengthException(Exception):
     pass
 
 
-# TODO: LEGACY INTERFACE -> IMPROVE WITH CONFIG OBJECT AS INPUT
+# threshold for checking orientation jumps in reference path
+_ANGLE_THRESHOLD = np.pi / 2
+
+
 class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
     """
-    Wrapper class for pycrccosy.CurvilinearCoordinateSystem
+    Python wrapper class for pycrccosy.CurvilinearCoordinateSystem.
+    This class takes a reference path and a CLCS configuration and
+        - pre-processes the reference path based on user options (e.g., smoothing, curvature reduction etc...)
+        - instantiates the C++ CurvilinearCoordinateSystem object
+        - allows interacting with the C++ object via the pybind methods
     """
 
-    def __init__(self, ref_path, default_projection_domain_limit=25.0, eps=0.1, eps2=1e-4, resample=True,
-                 num_chaikins_corner_cutting=10, max_polyline_resampling_step=2.0):
+    def __init__(self, reference_path: np.ndarray, params: CLCSParams, preprocess_path=True):
         """
-        Initializes a Curvilinear Coordinate System for a given reference path.
-        :param ref_path Reference Path as 2D polyline in Cartesian coordinates
-        :param default_projection_domain_limit maximum absolute distance in lateral direction of the projection domain\
-         border from the reference path
-        :param eps reduces the lateral distance of the projection domain border from the reference path
-        :param eps2 if nonzero, add additional segments to the beginning (3 segments) and the end (2 segments) of the\
-         reference path to enable the conversion of the points near the beginning and the end of the reference path
-        :param resample: whether the reference path should be refined using chainkins algorithm.
-        :param num_chaikins_corner_cutting: how often chaikins algorithm should be applied.
-        :param max_polyline_resampling_step: maximum step size for polyline resampling.
+        :param reference_path: reference path as numpy ndarray
+        :param params: config parameters for reference path pre-processing and CLCS
+        :param preprocess_path: Flag indicating whether the reference path should be pre-processed before
         """
-        if resample:
-            ref_path = chaikins_corner_cutting(ref_path, num_chaikins_corner_cutting)
-            length = compute_polyline_length(ref_path)
-            polyline_resampling_step = min(max_polyline_resampling_step, length/num_chaikins_corner_cutting)
-            ref_path = resample_polyline(ref_path, polyline_resampling_step)
+        # reference path checks
+        self.check_ref_path_validity(reference_path)
 
-        if len(ref_path) < 3:
-            raise RefPathLengthException("Reference path length is invalid")
+        if preprocess_path:
+            ref_path_processor = ProcessorFactory.create_processor(params)
+            reference_path = ref_path_processor(reference_path)
 
-        # remove duplicated vertices in reference path
-        _, idx = np.unique(ref_path, axis=0, return_index=True)
-        ref_path = ref_path[np.sort(idx)]
+        # remove potential duplicate vertices
+        reference_path = remove_duplicated_points_from_polyline(reference_path)
 
-        # initialize Curvilinear Coordinate System
-        super().__init__(ref_path, default_projection_domain_limit, eps, eps2)
+        # init base class (C++ backend)
+        super().__init__(
+            reference_path,
+            params.default_proj_domain_limit,
+            params.eps,
+            params.eps2,
+            2
+        )
 
-        # initialize reference attributes
-        self._reference = np.asarray(super().reference_path())
-        self._ref_pos = compute_pathlength_from_polyline(self.reference)
-        self._ref_theta = np.unwrap(compute_orientation_from_polyline(self.reference))
-        self._ref_curv: Optional[np.ndarray] = None
-        self._ref_curv_d: Optional[np.ndarray] = None
+        # pre-compute reference path attributes
+        self._reference_path = np.asarray(super().reference_path())
+        self._ref_pos = compute_pathlength_from_polyline(self.reference_path)
+        self._ref_theta = np.unwrap(compute_orientation_from_polyline(self.reference_path))
+        self._ref_curv = compute_curvature_from_polyline_python(self.reference_path)
+        self._ref_curv_d = np.gradient(self._ref_curv, self.ref_pos)
+        super().set_curvature(self.ref_curv)
 
-        # compute curvature and curvature derivative
-        self.compute_and_set_curvature()
+    @staticmethod
+    def check_ref_path_validity(ref_path: np.ndarray):
+        """Validity checks for input reference path for CLCS"""
+        # check valid type
+        assert isinstance(ref_path, ValidTypes.ARRAY), "Reference path needs to be a numpy array"
+        # check number of points in ref path
+        assert len(ref_path) >= 3, "Reference path has to contain >= 3 points"
+        # check valid orientation values
+        theta_arr = compute_orientation_from_polyline(ref_path)
+        assert all(is_valid_orientation(theta) for theta in theta_arr), \
+            "Reference path orientations should be in [-2pi, 2pi]"
+        # check orientation jumps
+        diff_theta_arr = np.diff(theta_arr)
+        assert all(np.abs(diff_theta_arr) < _ANGLE_THRESHOLD), \
+            f"Reference path misaligned. Max. allowed orientation difference is {_ANGLE_THRESHOLD}"
 
     def __getstate__(self):
+        """Required for pickling support"""
         return(pycrccosy.CurvilinearCoordinateSystem.__getstate__(self),
                self.__dict__)
 
     def __setstate__(self, state: tuple):
+        """Required for pickling support"""
         pycrccosy.CurvilinearCoordinateSystem.__setstate__(self, state[0])
         self.__dict__ = state[1]
 
     @property
-    def reference(self) -> np.ndarray:
+    def reference_path(self) -> np.ndarray:
         """returns reference path used by CCosy due to slight modifications within the CCosy module"""
-        return self._reference
+        return self._reference_path
 
     @property
     def ref_pos(self) -> np.ndarray:
@@ -96,22 +120,10 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
         """orientation along reference path"""
         return self._ref_theta
 
-    def compute_and_set_curvature(self, digits: int = 8):
-        """
-        Computes curvature and sets curvature _ref_curv and its derivative _ref_curv_d
-        :param digits: no. of decimal points to round curvature values
-        """
-        # call compute curvature function of C++ class
-        super().compute_and_set_curvature(digits)
-        # set curvature and curvature change
-        self._ref_curv = np.asarray(super().get_curvature())
-        self._ref_curv_d = np.gradient(self._ref_curv, self._ref_pos)
-
     def plot_reference_states(self):
-        """function plots orientation, curvature and curvature rate of ref path over s position"""
+        """Plots orientation, curvature and curvature rate of ref path over arclength"""
         plt.figure(figsize=(7, 7.5))
         plt.suptitle("Reference path states")
-
         # orientation
         plt.subplot(3, 1, 1)
         plt.plot(self.ref_pos, self.ref_theta, color="k")
