@@ -206,9 +206,7 @@ class CLCSParams(BaseParam):
     # tolerance projection domain computation
     eps: float = 0.1
     # extension reference path at start and end
-    eps2: float = 1e-4
-    # computation method (TODO remove from config)
-    method: int = 2
+    eps2: float = 1e-2
 
     # extrapolation distance of reference path forward/backward
     # avoids projection errors if ego vehicle is close to ref path start/end
