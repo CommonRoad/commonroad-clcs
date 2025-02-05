@@ -32,8 +32,8 @@ public:
      * @param def_proj_domain_lim maximum lateral extent of projection domain
      * @param eps numerical precision value to underapproximate projection domain
      * @param method valid options:
-     *               (1) worst-case curvature approximation
-     *               (2) provably correct tight under-approximation
+     *               (1) worst-case curvature approximation (very conservative)
+     *               (2) tight under-approximation using sweep line (less conservative)
      */
     ProjectionDomain(const std::vector<std::unique_ptr<Segment>> &seg_list,
                      const std::vector<double> curv_vec,

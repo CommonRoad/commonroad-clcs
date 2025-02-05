@@ -6,6 +6,7 @@ struct CurvilinearCoordinateSystemExportStruct {
   double default_projection_domain_limit;
   double eps;
   double eps2;
+  int method;
 };
 }  // namespace serialize
 }  // namespace geometry

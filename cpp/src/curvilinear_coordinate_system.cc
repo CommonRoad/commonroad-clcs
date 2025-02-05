@@ -11,7 +11,8 @@ CurvilinearCoordinateSystem::CurvilinearCoordinateSystem(
     const EigenPolyline& reference_path, double default_projection_domain_limit,
     double eps, double eps2, int method) :
     eps_(eps), eps2_(eps2),
-    default_projection_domain_limit_(default_projection_domain_limit) {
+    default_projection_domain_limit_(default_projection_domain_limit),
+    method_(method) {
 
   // pre-check reference path
   if (reference_path.size() < 3) {

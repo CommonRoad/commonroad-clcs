@@ -90,6 +90,11 @@ class CurvilinearCoordinateSystem
   double eps2() const { return eps2_; }
 
   /**
+   * Getter for method of computing projection domain
+   */
+  int method() const { return method_; }
+
+  /**
    * Getter for the reference path in Cartesian coordinates.
    * Reference path is extended at start and end (see eps2_)
    *
@@ -486,6 +491,7 @@ private:
   double default_projection_domain_limit_;      ///< default lateral projection domain limit
   double eps_;                                  ///< precision value to reduce lateral limit
   double eps2_;                                 ///< extrapolation value for start and end of reference
+  int method_;                                  ///< method for computing the projection domain (valid inputs: 1, 2)
 
 };
 

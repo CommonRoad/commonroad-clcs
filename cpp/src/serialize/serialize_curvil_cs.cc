@@ -26,6 +26,7 @@ CurvilinearCoordinateSystemExport::CurvilinearCoordinateSystemExport(
   m_fields.default_projection_domain_limit = cs.defaultProjectionDomainLimit();
   m_fields.eps = cs.eps();
   m_fields.eps2 = cs.eps2();
+  m_fields.method = cs.method();
 
   for (auto el : cs.referencePathOriginal()) {
     m_reference_path.push_back(el);
@@ -44,6 +45,7 @@ bool CurvilinearCoordinateSystemExport::operator()(
           m_fields.default_projection_domain_limit);
   TR::set(dest, "eps", m_fields.eps);
   TR::set(dest, "eps2", m_fields.eps2);
+  TR::set(dest, "method", m_fields.method);
 
   bool res = true;
   res = res && s11n::list::serialize_list(dest, "ref_path", m_reference_path);
@@ -59,6 +61,7 @@ bool CurvilinearCoordinateSystemExport::operator()(
       TR::get(src, "default_projection_domain_limit", double(0));
   m_fields.eps = TR::get(src, "eps", double(0));
   m_fields.eps2 = TR::get(src, "eps2", double(0));
+  m_fields.method = TR::get(src, "method", int(1));
 
   bool res = true;
   res = res &&
@@ -79,7 +82,7 @@ CurvilinearCoordinateSystem *CurvilinearCoordinateSystemExport::loadObject(
 
   CurvilinearCoordinateSystem *cs = new CurvilinearCoordinateSystem(
       ref_path, m_fields.default_projection_domain_limit, m_fields.eps,
-      m_fields.eps2);
+      m_fields.eps2, m_fields.method);
 
   if (m_curvature_vec.size() > 0) {
     cs->setCurvature(m_curvature_vec);
