@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 
 import commonroad_clcs.clcs as clcs
+from commonroad_clcs.config import CLCSParams
 
 
 class TestPyCLCSWrapper(unittest.TestCase):
@@ -18,9 +19,17 @@ class TestPyCLCSWrapper(unittest.TestCase):
 
         # get reference path from test data
         self.reference_path_test = data_set['reference_path']
-        self.curvilinear_coord_sys = clcs.CurvilinearCoordinateSystem(self.reference_path_test,
-                                                                      eps2=0.0,
-                                                                      resample=False)
+
+        # create params objects
+        params = CLCSParams()
+        params.eps2 = 0.0
+
+        # create CLCS
+        self.curvilinear_coord_sys = clcs.CurvilinearCoordinateSystem(
+            reference_path=self.reference_path_test,
+            params=params,
+            preprocess_path=False
+        )
 
         # get data file
         with open(os.path.join(file_dir_path, 'test_data/reference_path_b_data_new.pic'), 'rb') as property_file:

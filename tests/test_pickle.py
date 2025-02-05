@@ -4,9 +4,11 @@ import unittest
 import pickle
 
 import numpy as np
+from parameterized import param
 
 from commonroad_clcs import pycrccosy
 from commonroad_clcs.clcs import CurvilinearCoordinateSystem
+from commonroad_clcs.config import CLCSParams
 
 
 class PickleTest(unittest.TestCase):
@@ -27,12 +29,18 @@ class PickleTest(unittest.TestCase):
         # get reference path from data
         self.reference_path_test = data_set['reference_path']
 
-        # CLCS pybind object
+        # Instantiate CLCS via pybind C++ object directly
         self.pycrccosy_CLCS = pycrccosy.CurvilinearCoordinateSystem(self.reference_path_test)
         self.pycrccosy_CLCS.compute_and_set_curvature()
 
-        # CLCS wrapper class (contains pybind object and additional attributes)
-        self.wrapper_CLCS = CurvilinearCoordinateSystem(self.reference_path_test)
+        # Instantiate CLCS via Python wrapper class (extends pybind object by additional attributes)
+        params = CLCSParams()
+        params.default_proj_domain_limit = 20.0
+        self.wrapper_CLCS = CurvilinearCoordinateSystem(
+            reference_path=self.reference_path_test,
+            params=params,
+            preprocess_path=False
+        )
 
     def test_pickle_dump_pybind(self):
         clcs_dump = pickle.dumps(self.pycrccosy_CLCS)
@@ -103,7 +111,7 @@ class PickleTest(unittest.TestCase):
 
         # ************ Test additional attributes of wrapper class *************
         # reference
-        assert np.allclose(self.wrapper_CLCS.reference, clcs_load.reference)
+        assert np.allclose(self.wrapper_CLCS.ref_path, clcs_load.ref_path)
         # reference positions
         assert np.allclose(self.wrapper_CLCS.ref_pos, clcs_load.ref_pos)
         # curvature
