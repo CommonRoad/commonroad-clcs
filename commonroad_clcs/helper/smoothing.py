@@ -154,13 +154,24 @@ def smooth_polyline_spline(
 
     return new_polyline
 
-def smooth_polyline_rdp(polyline: np.ndarray, tol=2e-5) -> np.ndarray:
+def smooth_polyline_rdp(
+        polyline: np.ndarray,
+        tol: float = 2e-5,
+        resample_step: Optional[float] = None
+) -> np.ndarray:
     """
     Smooths a polyline using Ramer-Douglas-Peucker algorithm.
     RDP is a point reduction algorithm to simplify polylines
+    :param polyline: input polyline as numpy array
+    :param tol: allowed tolerance for removing points from original polyline
+    :param resample_step: fixed step for resampling the modified polyline (if desired)
     """
     list_reduced_polyline = reducePointsDP(polyline.tolist(), tol)
-    return np.asarray(list_reduced_polyline)
+    new_polyline = np.asarray(list_reduced_polyline)
+    if resample_step:
+        return resample_polyline(new_polyline, resample_step)
+    else:
+        return new_polyline
 
 
 def smooth_polyline_elastic_band(
