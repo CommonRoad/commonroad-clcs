@@ -77,7 +77,7 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
         # check number of points in ref path
         assert len(ref_path) >= 3, "Reference path has to contain >= 3 points"
         # check valid orientation values
-        theta_arr = compute_orientation_from_polyline(ref_path)
+        theta_arr = np.unwrap(compute_orientation_from_polyline(ref_path))
         assert all(is_valid_orientation(theta) for theta in theta_arr), \
             "Reference path orientations should be in [-2pi, 2pi]"
         # check orientation jumps
