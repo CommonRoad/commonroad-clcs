@@ -1,5 +1,5 @@
 # standard imports
-from typing import Optional
+from typing import Optional, List
 
 # third party
 import matplotlib.pyplot as plt
@@ -134,6 +134,7 @@ def plot_scenario_and_clcs(
         clcs: CurvilinearCoordinateSystem = None,
         planning_problem: Optional[PlanningProblem] = None,
         renderer: Optional[MPRenderer] = None,
+        plot_limits: Optional[List[float]] = None,
         show: bool = False,
         lanelet_network: Optional[LaneletNetwork] = None,
         proj_domain_plot: Optional[str] = "full",
@@ -148,13 +149,14 @@ def plot_scenario_and_clcs(
     :param clcs: pycrccosy.CurvilinearCoordinateSystem object
     :param planning_problem: PlanningProblem object
     :param renderer: MPRenderer object
+    :param plot_limits: plot limits as list [x_min, x_max, y_min, y_max]
     :param show: show plot True/False
     :param lanelet_network: subset of lanelets to highlight
     :param proj_domain_plot: str, whether to plot full, left or right projection domain ("full", "left", "right")
     :param plot_ref_path bool
     """
     # create renderer if not given
-    rnd = renderer if renderer is not None else MPRenderer(figsize=(7, 10))
+    rnd = renderer if renderer is not None else MPRenderer(figsize=(7, 10), plot_limits=plot_limits)
 
     # draw params general
     rnd.draw_params.time_begin = 0 if time_step is None else time_step
