@@ -40,7 +40,8 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
         """
         :param reference_path: reference path as numpy ndarray
         :param params: config parameters for reference path pre-processing and CLCS
-        :param preprocess_path: Flag indicating whether the reference path should be pre-processed before
+        :param preprocess_path: Flag indicating whether the reference path should be pre-processed
+                                Set to False if reference path is pre-processed before already
         """
         # reference path checks
         self.check_ref_path_validity(reference_path)
