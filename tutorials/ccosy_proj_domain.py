@@ -9,7 +9,6 @@ import os
 import time
 
 # commonroad-clcs
-from commonroad_clcs import pycrccosy
 from commonroad_clcs.config import (
     CLCSParams,
     ProcessingOption,
@@ -25,6 +24,7 @@ from commonroad_clcs.util import (
     compute_polyline_length,
     extend_reference_path
 )
+from commonroad_clcs.clcs import CurvilinearCoordinateSystem
 
 from commonroad_clcs.helper.smoothing import (
     smooth_polyline_rdp,
@@ -48,9 +48,9 @@ from commonroad.visualization.mp_renderer import MPRenderer
 # Load scenario
 # ***************************
 # load the CommonRoad scenario, note that you might have to modify the path to the CommonRoad scenario!
-# scenario_name = 'USA_Peach-2_1_T-1.xml'
+scenario_name = 'USA_Peach-2_1_T-1.xml'
 # scenario_name = "ZAM_Tjunction-1_42_T-1.xml"
-scenario_name = "USA_Lanker-2_5_T-1_mod2.xml"
+# scenario_name = "USA_Lanker-2_5_T-1_mod2.xml"
 
 file_path = os.path.join(os.getcwd(), scenario_name)
 
@@ -125,24 +125,30 @@ print("\tPlanning routes took: \t", time.time() - time_start)
 ref_path_orig = deepcopy(ref_path)
 
 
-# TODO test ref path extension
 # TODO it is advised to simplify polyline via RDP and resample beforehand
 
-ref_path = extend_reference_path(
-    reference_path=resample_polyline(ref_path, 1.0),
-    resample_step=1.0,
-    extend_front_length=50.0,
-    extend_back_length=10.0,
-    lanelet_network=scenario.lanelet_network
-)
+# ********************************
+# Reference Path Extension
+# ********************************
+# Ref path extension
+extend_ref_path = True
+if extend_ref_path:
+    print("Extending reference path...")
+    ref_path = extend_reference_path(
+        reference_path=resample_polyline(ref_path, 1.0),
+        resample_step=1.0,
+        extend_front_length=CLCSParams.extrapolate_forward_dist,
+        extend_back_length=CLCSParams.extrapolate_backward_dist,
+        lanelet_network=scenario.lanelet_network
+    )
+    print(f"Length before extension: {compute_polyline_length(resample_polyline(ref_path_orig, 1.0))}")
+    print(f"Length after extension: {compute_polyline_length(ref_path)}")
 
-print(f"Length before extension: {compute_polyline_length(resample_polyline(ref_path_orig, 1.0))}")
-print(f"Length after extension: {compute_polyline_length(ref_path)}")
 
 # *******************************************
 # Pre-Processing options on reference path
 # *******************************************
-# apply chaikins corner cutting for fixed number of iterations and resample afterwards
+# apply chaikins corner cutting for fixed number of iterations and resample afterward
 corner_cutting = False
 iterations_corner_cutting = 500
 if corner_cutting:
@@ -258,19 +264,14 @@ if smooth_eb:
 # ***************************
 # Curvilinear CoSys
 # ***************************
+# create params objects
+params = CLCSParams()
 # create curvilinear CoSys ref_path after preprocessing
-ccosy_settings = {
-    "default_limit": 40.0,
-    "eps": 0.1,
-    "eps2": 1e-2,
-    "method": 2
-}
-
-curvilinear_cosy = pycrccosy.CurvilinearCoordinateSystem(ref_path,
-                                                         ccosy_settings["default_limit"],
-                                                         ccosy_settings["eps"],
-                                                         ccosy_settings["eps2"],
-                                                         ccosy_settings["method"])
+curvilinear_cosy = CurvilinearCoordinateSystem(
+    reference_path=ref_path,
+    params=params,
+    preprocess_path=False
+)
 
 # convert and project point
 project_point = False
