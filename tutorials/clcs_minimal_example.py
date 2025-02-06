@@ -1,11 +1,13 @@
 import os
 
+from matplotlib import pyplot as plt
+
 from commonroad.common.file_reader import CommonRoadFileReader
+from commonroad.visualization.mp_renderer import MPRenderer
 
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.reference_path_planner import ReferencePathPlanner
 
-from matplotlib import pyplot as plt
 from commonroad_clcs.clcs import CurvilinearCoordinateSystem
 from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 from commonroad_clcs.helper.visualization import plot_scenario_and_clcs
@@ -59,14 +61,19 @@ curvilinear_cosy = CurvilinearCoordinateSystem(
 # *************** Transform exemplary point
 cartesian_pt = [-20.0, 68.0]
 curvilinear_pt = curvilinear_cosy.convert_to_curvilinear_coords(cartesian_pt[0], cartesian_pt[1])
-
+projected_pt = curvilinear_cosy.convert_to_cartesian_coords(curvilinear_pt[0], 0.0)
 
 
 # *************** Visualize
-# plot scenario with
+# plot scenario with CLCS
+rnd = MPRenderer(figsize=(7, 10), plot_limits=[-40.32, -7, 26, 80])
 plot_scenario_and_clcs(
     scenario,
     curvilinear_cosy,
-    proj_domain_plot="full"
+    renderer=rnd,
+    proj_domain_plot=None
 )
+# draw transformed point
+rnd.ax.plot([cartesian_pt[0], projected_pt[0]], [cartesian_pt[1], projected_pt[1]],
+            zorder=100, linewidth=2, marker='.', markersize=9, color='red')
 plt.show()
