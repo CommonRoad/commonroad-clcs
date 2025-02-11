@@ -62,13 +62,13 @@ target_include_directories(crccosy
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/cpp/include>
 )
 
-# link OpenMP, spdlog
+# link private: OpenMP
 target_link_libraries(crccosy
         PRIVATE
         OpenMP::OpenMP_CXX
 )
 
-# link Eigen and Boost
+# link public: Eigen, Boost, spdlog
 target_link_libraries(crccosy
         PUBLIC
         Eigen3::Eigen
