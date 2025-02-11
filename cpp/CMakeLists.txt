@@ -66,7 +66,6 @@ target_include_directories(crccosy
 target_link_libraries(crccosy
         PRIVATE
         OpenMP::OpenMP_CXX
-        spdlog::spdlog
 )
 
 # link Eigen and Boost
@@ -74,6 +73,7 @@ target_link_libraries(crccosy
         PUBLIC
         Eigen3::Eigen
         Boost::headers
+        spdlog::spdlog
 )
 
 # link libs11n
