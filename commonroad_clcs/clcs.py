@@ -59,7 +59,7 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
             params.default_proj_domain_limit,
             params.eps,
             params.eps2,
-            2,
+            params.method,
             log_level=params.logging_level
         )
 

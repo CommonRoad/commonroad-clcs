@@ -195,31 +195,23 @@ class CLCSParams(BaseParam):
     # processing option for reference path
     processing_option: ProcessingOption = ProcessingOption.RESAMPLE
 
-    # TODO remove param
-    # Ramer-Douglas-Peucker polyline simplification tolerance
-    rdp_tolerance: float = 2e-5
-
-    # projection domain parameters
-    # flag deciding whether to compute the projection domain polygon and check containment before transforming a point
+    # ===== parameters for C++ backend
+    # flag deciding whether to check containment within projection domain before transforming a point
     use_proj_domain: bool = True
-    # default limit
+    # default lateral projection domain limit
     default_proj_domain_limit: float = 40.0
-    # tolerance projection domain computation
-    eps: float = 0.1
-    # extension reference path at start and end
-    eps2: float = 1e-2
-
-    # logging level (C++ logger)
-    # Options: "off", "critical", "err", "warn", "info", "debug", "trace"
+    # C++ logging level | Options: "off", "critical", "err", "warn", "info", "debug", "trace"
     logging_level: str = "off"
 
-    # extrapolation distance of reference path forward/backward
-    # avoids projection errors if ego vehicle is close to ref path start/end
-    # TODO remove params?
-    extrapolate_forward_dist: float = 10.0
-    extrapolate_backward_dist: float = 5.0
+    # ===== parameters only for development purposes
+    # tolerance projection domain computation
+    eps: float = 0.1
+    # tolerance extension of reference path at start and end to avoid projection errors
+    eps2: float = 1e-2
+    # method for projection domain computation
+    method: int = 1
 
-    # parameter sub classes
+    # ===== parameter sub classes
     resampling: ResamplingParams = field(default_factory=ResamplingParams)
     spline: SplineParams = field(default_factory=SplineParams)
     subdivision: SubdivisionParams = field(default_factory=SubdivisionParams)
