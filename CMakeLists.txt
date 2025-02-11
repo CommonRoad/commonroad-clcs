@@ -252,14 +252,17 @@ if(CR_CLCS_SYSTEM_PACKAGES_FORCE)
             "trying again.")
 
     find_package(Eigen3 3.3.7 REQUIRED)
-    find_package(spdlog 1.8.0 REQUIRED)
+#    find_package(spdlog 1.8.0 REQUIRED)
 else()
     # Normal path: We try to use find_package via FetchContent, otherwise we fall
     # back to normal FetchContent
 
     include(third_party/external_eigen.cmake)
-    include(third_party/external_spdlog.cmake)
+#    include(third_party/external_spdlog.cmake)
 endif()
+
+# TODO test include spdlog always
+include(third_party/external_spdlog.cmake)
 
 # Add third party subdirectory for building libs11n
 if(CR_CLCS_BUILD_S11N)
