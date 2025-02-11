@@ -17,10 +17,11 @@ Here we provide more detailed information for using our software for development
 - [OpenMP](https://www.openmp.org/)
 
 **Optional installation:** The following dependencies are automatically installed via CMake FetchContent.
-To speed up the build they can optionally by installed manually.
+However, to speed up the build we recommend to optionally install them manually.
 - [Boost.Geometry](https://www.boost.org/doc/libs/1_79_0/libs/geometry/doc/html/index.html)
 - [Eigen3](https://eigen.tuxfamily.org/)
 - [pybind11](https://github.com/pybind/pybind11)
+- [spdlog](https://github.com/gabime/spdlog)
 
 The additional Python build dependencies are listed in [pyproject.toml](pyproject.toml) under `build`.
 

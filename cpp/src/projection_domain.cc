@@ -124,13 +124,12 @@ void ProjectionDomain::approximateCurvilinearProjectionDomain(const std::vector<
 }
 
 void ProjectionDomain::approximateProjectionDomain(const std::vector<std::unique_ptr<Segment>>& segment_list) {
-    std::cout << "<ProjectionDomain/approximateProjectionDomain>: Using method number: "
-        << this->proj_domain_method_ << std::endl;
+    // get logger
+    auto logger = CLCSLogger::getLogger();
+    logger->debug("<approximateProjectionDomain()> Using computation method: {}", this->proj_domain_method_);
 
     // number of segments
     const std::size_t num_segments{segment_list.size()};
-
-    // std::cout << "<ProjectionDomain/approximateProjectionDomain>: number of segments: " << num_segments << std::endl;
 
     // initialize distance vectors
     std::vector<double> vec_left_distances(num_segments, this->default_projection_domain_limit_);
@@ -162,8 +161,9 @@ void ProjectionDomain::approximateProjectionDomain(const std::vector<std::unique
     // End timer and print execution time to console
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
-    std::cout << "<ProjectionDomain/approximateProjectionDomain>: "
-                 "Computing projection domain border took: " << duration << " nanoseconds." << std::endl;
+
+    // log to console
+    logger->debug("<approximateProjectionDomain()> Computing projection domain took: {} nanoseconds", duration);
 
     // create boost polygon for Cartesian projection domain from border polyline
     util_proj::polylineToBoostPolygon(this->projection_domain_border_, this->projection_domain_);

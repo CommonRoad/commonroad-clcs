@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <optional>
 #include <vector>
+#include <string>
 
 #include "geometry/curvilinear_coordinate_system.h"
 #include "geometry/segment.h"
@@ -106,6 +107,7 @@ void init_module_geometry(py::module &m) {
   py::register_exception<geometry::CartesianProjectionDomainError>
           (m, "CartesianProjectionDomainError");
 
+  // class Segment()
   py::class_<geometry::Segment>(m, "Segment")
       .def(py::init<const Eigen::Vector2d &, Eigen::Vector2d &,
                     Eigen::Vector2d &, Eigen::Vector2d &>(),
@@ -128,18 +130,17 @@ void init_module_geometry(py::module &m) {
       .def_property_readonly("tangent_segment_end", &geometry::Segment::tangentSegmentEnd,
                              ":return: tangent vector at the end of the segment");
 
+  // class CurvilinearCoordinateSystem()
   py::class_<geometry::CurvilinearCoordinateSystem,
              std::shared_ptr<geometry::CurvilinearCoordinateSystem>>(
       m, "CurvilinearCoordinateSystem")
-      .def(py::init<const geometry::EigenPolyline &>())
-      .def(py::init<const geometry::EigenPolyline &, const double,
-                    const double>())
-      .def(
-          py::init<const geometry::EigenPolyline &, const double, const double,
-                   const double>())
-      .def(
-          py::init<const geometry::EigenPolyline &, const double, const double,
-                   const double, const int>(),
+      .def(py::init<const geometry::EigenPolyline &, double, double, double, int, const std::string &>(),
+              py::arg("reference_path"),
+              py::arg("default_projection_domain_limit") = 20.0,
+              py::arg("eps") = 0.1,
+              py::arg("eps2") = 0.01,
+              py::arg("method") = 1,
+              py::arg("log_level") = "off",
 
           "Creates a curvilinear coordinate system aligned to the given reference path."
     "The unique projection domain along the reference path is automatically computed."
@@ -202,6 +203,10 @@ void init_module_geometry(py::module &m) {
            &geometry::CurvilinearCoordinateSystem::segmentsLongitudinalCoordinates,
            ":return: array containing longitudinal coordinates corresponding "
            "to the start point of each segment")
+
+      .def("set_logging_level", &geometry::CurvilinearCoordinateSystem::setLoggingLevel,
+           "Setter for logging level"
+           "\n\n:param log_level desired logging level given as a string")
 
       .def("set_curvature", &geometry::CurvilinearCoordinateSystem::setCurvature,
           "Currently, the curvature of the reference path is not computed "

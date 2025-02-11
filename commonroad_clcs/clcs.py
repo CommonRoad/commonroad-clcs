@@ -59,7 +59,8 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
             params.default_proj_domain_limit,
             params.eps,
             params.eps2,
-            2
+            2,
+            log_level=params.logging_level
         )
 
         # pre-compute reference path attributes

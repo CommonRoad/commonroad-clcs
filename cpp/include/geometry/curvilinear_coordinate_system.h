@@ -30,6 +30,7 @@
 #include "geometry/util_sweep_line.h"
 #include "geometry/clcs_exceptions.h"
 #include "geometry/clcs_types.h"
+#include "geometry/clcs_logger.h"
 
 namespace util_sweep = geometry::sweep_line_util;
 
@@ -68,11 +69,16 @@ class CurvilinearCoordinateSystem
    * @param eps2 add three additional segments to the beginning the reference
    * path and two segments to the end, with length eps2, to enable the
    * conversion of points near the beginning and the end of the reference path
+   * @param log_level: string indicating the logging level for debugging purposes (default off)
+   * Valid options: "off", "critical", "err", "warn", "info", "debug", "trace"
    * @param method [int] specify method for computing the projection domain (valid inputs: 1, 2)
    */
   CurvilinearCoordinateSystem(const EigenPolyline& reference_path,
                               double default_projection_domain_limit = 20.,
-                              double eps = 0.1, double eps2 = 1e-4, int method = 1);
+                              double eps = 0.1,
+                              double eps2 = 1e-4,
+                              int method = 1,
+                              const std::string &log_level = "off");
 
   /**
    * Getter for default projection domain limit
@@ -154,12 +160,12 @@ class CurvilinearCoordinateSystem
   /**
    * Getter for curvature vector.
    */
-  std::vector<double> curvatureVector(void) const;
+  std::vector<double> curvatureVector() const;
 
   /**
    * Getter for curvature radius vector.
    */
-  std::vector<double> curvatureRadiusVector(void) const;
+  std::vector<double> curvatureRadiusVector() const;
 
   /**
    * Getter for the maximum curvature radius along the reference path .
@@ -202,6 +208,14 @@ class CurvilinearCoordinateSystem
    * @return reference to vector segment pointers
    */
   const std::vector<std::unique_ptr<Segment>> &getSegmentList() const;
+
+  /**
+   * Setter for logging level
+   *
+   * @param log_level desired logging level given as a string
+   * Valid options: "off", "critical", "err", "warn", "info", "debug", "trace"
+   */
+  void setLoggingLevel(const std::string &log_level);
 
   /**
    * Setter for the curvature vector of the reference path

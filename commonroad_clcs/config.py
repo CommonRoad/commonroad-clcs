@@ -195,6 +195,7 @@ class CLCSParams(BaseParam):
     # processing option for reference path
     processing_option: ProcessingOption = ProcessingOption.RESAMPLE
 
+    # TODO remove param
     # Ramer-Douglas-Peucker polyline simplification tolerance
     rdp_tolerance: float = 2e-5
 
@@ -208,8 +209,13 @@ class CLCSParams(BaseParam):
     # extension reference path at start and end
     eps2: float = 1e-2
 
+    # logging level (C++ logger)
+    # Options: "off", "critical", "err", "warn", "info", "debug", "trace"
+    logging_level: str = "off"
+
     # extrapolation distance of reference path forward/backward
     # avoids projection errors if ego vehicle is close to ref path start/end
+    # TODO remove params?
     extrapolate_forward_dist: float = 10.0
     extrapolate_backward_dist: float = 5.0
 

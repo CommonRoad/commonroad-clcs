@@ -8,6 +8,7 @@
 #include "geometry/segment.h"
 #include "geometry/clcs_types.h"
 #include "geometry/clcs_exceptions.h"
+#include "geometry/clcs_logger.h"
 
 
 namespace geometry {
