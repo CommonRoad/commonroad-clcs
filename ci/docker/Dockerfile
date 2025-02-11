@@ -11,6 +11,7 @@ RUN apt-get update && \
         libomp-dev \
         libeigen3-dev \
         libboost-all-dev \
+        libspdlog-dev \
         libblas3 liblapack3 liblapack-dev libblas-dev gfortran \
         libgl1 \
         doctest-dev && \

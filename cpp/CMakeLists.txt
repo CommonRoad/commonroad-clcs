@@ -16,6 +16,7 @@ set(CR_CLCS_HDR_FILES
         include/geometry/application_settings.h
         include/geometry/clcs_exceptions.h
         include/geometry/clcs_types.h
+        include/geometry/clcs_logger.h
         include/geometry/segment.h
         include/geometry/curvilinear_coordinate_system.h
         include/geometry/projection_domain.h
@@ -65,6 +66,12 @@ target_include_directories(crccosy
 target_link_libraries(crccosy
         PRIVATE
         OpenMP::OpenMP_CXX
+)
+
+# link spdlog
+target_link_libraries(crccosy
+        PRIVATE
+        spdlog::spdlog
 )
 
 # link Eigen and Boost

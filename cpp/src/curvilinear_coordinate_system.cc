@@ -9,10 +9,13 @@ namespace geometry {
 
 CurvilinearCoordinateSystem::CurvilinearCoordinateSystem(
     const EigenPolyline& reference_path, double default_projection_domain_limit,
-    double eps, double eps2, int method) :
+    double eps, double eps2, int method, const std::string &log_level) :
     eps_(eps), eps2_(eps2),
     default_projection_domain_limit_(default_projection_domain_limit),
     method_(method) {
+
+  // initialize logger
+  CLCSLogger::init(log_level);
 
   // pre-check reference path
   if (reference_path.size() < 3) {
@@ -43,6 +46,9 @@ CurvilinearCoordinateSystem::CurvilinearCoordinateSystem(
 
   // compute partitions of reference path at inflection points
   util::computePathPartitions(this->referencePath(), this->reference_path_partitions_);
+
+  // log info
+  CLCSLogger::getLogger()->info("Initialization of CLCS done");
 }
 
 EigenPolyline CurvilinearCoordinateSystem::referencePath() const {
@@ -83,6 +89,10 @@ const std::vector<double> &CurvilinearCoordinateSystem::segmentsLongitudinalCoor
 
 const std::vector<std::unique_ptr<Segment>> &CurvilinearCoordinateSystem::getSegmentList() const {
     return this->path_segments_ptr->getSegmentList();
+}
+
+void CurvilinearCoordinateSystem::setLoggingLevel(const std::string &log_level) {
+    CLCSLogger::init(log_level);
 }
 
 void CurvilinearCoordinateSystem::setCurvature(std::vector<double> curvature) {

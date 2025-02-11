@@ -300,8 +300,9 @@ void PathSegments::computeBestProjectionAxisForSegments(const EigenPolyline &upp
     // End timer and print execution time to console
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
-    std::cout << "<CurvilinearCoordinateSystem/computeBestProjectionAxisForSegments>: "
-                 "Pre-computing projection axis for segments took: " << duration << " nanoseconds." << std::endl;
+    auto logger = CLCSLogger::getLogger();
+    logger->debug("<computeBestProjectionAxisForSegments()> "
+                  "Pre-computing projection axis for segments took {} nanoseconds", duration);
 }
 
 std::vector<int> PathSegments::findCandidatePointsInSegment(

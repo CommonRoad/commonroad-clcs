@@ -51,6 +51,7 @@ ref_path = ref_path_processor(ref_path)
 
 
 # *************** Construct CLCS
+params.logging_level = "info"
 curvilinear_cosy = CurvilinearCoordinateSystem(
     reference_path=ref_path,
     params=params,

@@ -10,6 +10,7 @@
 #include "geometry/util_projection_domain.h"
 #include "geometry/clcs_exceptions.h"
 #include "geometry/clcs_types.h"
+#include "geometry/clcs_logger.h"
 
 // namespaces
 namespace util_sweep = geometry::sweep_line_util;
