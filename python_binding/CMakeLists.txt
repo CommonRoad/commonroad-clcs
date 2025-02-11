@@ -36,7 +36,7 @@ if(SKBUILD)
     pybind11_add_module(${python_module_name} MODULE $<TARGET_OBJECTS:crccosy_python>)
 
     # link crccosy
-    target_link_libraries(${python_module_name} PRIVATE crccosy spdlog::spdlog)
+    target_link_libraries(${python_module_name} PRIVATE crccosy)
 
     # link libs11n
     if(NOT CR_CLCS_BUILD_S11N)
