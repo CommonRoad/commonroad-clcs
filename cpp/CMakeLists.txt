@@ -62,15 +62,10 @@ target_include_directories(crccosy
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/cpp/include>
 )
 
-# link OpenMP
+# link OpenMP, spdlog
 target_link_libraries(crccosy
         PRIVATE
         OpenMP::OpenMP_CXX
-)
-
-# link spdlog
-target_link_libraries(crccosy
-        PRIVATE
         spdlog::spdlog
 )
 
