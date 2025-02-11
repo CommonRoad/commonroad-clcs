@@ -68,7 +68,7 @@ build-gcc:
     CXX: g++
   script:
     - cmake -G "Ninja Multi-Config" -S . -B build
-    - cmake --build build --config Release --verbose
+    - cmake --build build --config Release
   needs: [ ]
 
 # build Clang
