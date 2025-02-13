@@ -1,6 +1,8 @@
+from typing import Optional
 import unittest
 
 import numpy as np
+import pickle
 
 from commonroad_clcs.pycrccosy import (
     CurvilinearCoordinateSystem,
@@ -8,12 +10,16 @@ from commonroad_clcs.pycrccosy import (
     CurvilinearProjectionDomainLateralError,
     CurvilinearProjectionDomainLongitudinalError
 )
+from commonroad_clcs.config import (
+    CLCSParams,
+    ProcessingOption
+)
+from commonroad_clcs.ref_path_processing.factory import ProcessorFactory
 
 
-class TestCoordinateConversion(unittest.TestCase):
+class TestSinglePointConversion(unittest.TestCase):
     """
-    Base test class for testing coordinate conversions between Cartesian and curvilinear coordinates
-    and vice versa
+    Test class for conversion functions for single points
     """
 
     def setUp(self) -> None:
@@ -35,12 +41,6 @@ class TestCoordinateConversion(unittest.TestCase):
         # get projection domain CART and CURV
         self.proj_domain_cart = np.array(self.ccosy.projection_domain())
         self.proj_domain_curv = np.array(self.ccosy.convert_polygon_to_curvilinear_coords(self.proj_domain_cart))[0]
-
-
-class TestSinglePointConversion(TestCoordinateConversion):
-    """
-    Test class for conversion functions for single points
-    """
 
     def test_convert_to_curvilinear_coordinates(self):
         """
@@ -102,25 +102,103 @@ class TestSinglePointConversion(TestCoordinateConversion):
         self.assertTrue(exception_raised)
 
 
-class TestListOfPointsConversion(TestCoordinateConversion):
+class TestListOfPointsConversion(unittest.TestCase):
     """
     Test class for conversion functions for list of points
     """
+    def setUp(self):
+        # load reference path
+        with open("./test_data/reference_path_b.pic", "rb") as f:
+            data_set = pickle.load(f)
+        self.reference_path = data_set['reference_path']
 
-    pass
+        # load points
+        with open("./test_data/segment_coordinate_system_reference_path_b_points_a.pic", "rb") as f:
+            data_set = pickle.load(f)
+        self.x = data_set['x']
+        self.y = data_set['y']
 
+        # process reference path
+        params = CLCSParams()
+        params.processing_option = ProcessingOption.CURVE_SUBDIVISION
+        params.subdivision.degree = 1
+        params.subdivision.max_curvature = 0.2
+        params.subdivision.coarse_resampling_step = 1.0
+        params.resampling.fixed_step = 1.0
 
-class TestPolygonConversion(TestCoordinateConversion):
-    """
-    Test class for conversion functions for polygons
-    """
-    pass
+        ref_path_processor = ProcessorFactory.create_processor(params)
+        self.reference_path = ref_path_processor(self.reference_path)
 
+        # create CLCS
+        self.ccosy = CurvilinearCoordinateSystem(
+            self.reference_path, 40.0, 0.1, 1e-2
+        )
 
-class TestRectangleConversion(TestCoordinateConversion):
-    """
-    Test class for conversion functions for rectangles
-    """
+        # cartesian points in projection domain
+        self.cart_points_in_proj_domain = self._get_points_in_proj_domain()
+        self.num_cart_points_in_proj_domain = self.cart_points_in_proj_domain.shape[0]
+
+    def _get_points_in_proj_domain(self) -> np.ndarray:
+        points = []
+        for xv,yv in zip(self.x, self.y):
+            if self.ccosy.cartesian_point_inside_projection_domain(xv, yv):
+                points += [[xv, yv]]
+        return np.array(points)
+
+    def test_convert_list_of_points(self):
+        """Tests list conversion of points from Cart to Curv and vice-versa"""
+        # convert to curvilinear
+        curv_points = np.array(self.ccosy.convert_list_of_points_to_curvilinear_coords(
+            self.cart_points_in_proj_domain, 4))
+
+        # check same number of points
+        self.assertEqual(curv_points.shape[0], self.num_cart_points_in_proj_domain)
+
+        # convert back to Cartesian
+        cart_points = np.array(self.ccosy.convert_list_of_points_to_cartesian_coords(curv_points, 4))
+
+        # check same number of points
+        self.assertEqual(cart_points.shape[0], self.num_cart_points_in_proj_domain)
+
+        # check same Cartesian points after converting back and forth
+        np.testing.assert_allclose(
+            cart_points, self.cart_points_in_proj_domain, atol=1e-3, rtol=0
+        )
+
+    def test_consistency_list_and_single_conversion(self):
+        """Tests consistency between list conversion and single conversion methods"""
+        # ======== Cartesian to Curvilinear
+        # list conversion
+        curv_points_list = np.array(
+            self.ccosy.convert_list_of_points_to_curvilinear_coords(self.cart_points_in_proj_domain, 4)
+        )
+        # single conversion
+        curv_points_single = list()
+        for pt in self.cart_points_in_proj_domain:
+            p_curv = self.ccosy.convert_to_curvilinear_coords(pt[0], pt[1])
+            curv_points_single.append(p_curv)
+        curv_points_single = np.array(curv_points_single)
+
+        # check if both results are consistent
+        np.testing.assert_allclose(
+            curv_points_list, curv_points_single, atol=1e-3, rtol=0.0
+        )
+
+        # ======== Curvilinear to Cartesian
+        cart_points_list = np.array(
+            self.ccosy.convert_list_of_points_to_cartesian_coords(curv_points_list, 4)
+        )
+        # single conversion
+        cart_points_single = list()
+        for pt in curv_points_single:
+            p_cart = self.ccosy.convert_to_cartesian_coords(pt[0], pt[1])
+            cart_points_single.append(p_cart)
+        cart_points_single = np.array(cart_points_single)
+
+        # check if both results are consistent
+        np.testing.assert_allclose(
+            cart_points_list, cart_points_single, atol=1e-3, rtol=0.0
+        )
 
 
 if __name__ == '__main__':
