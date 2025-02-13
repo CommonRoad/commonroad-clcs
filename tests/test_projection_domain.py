@@ -30,8 +30,15 @@ class TestProjectionDomain(unittest.TestCase):
         # create CCosy
         self.eps = 0.1
         self.eps2 = 0.3
-        self.ccosy = CurvilinearCoordinateSystem(self.reference_path, self.default_lim, self.eps, self.eps2,
-                                                 self.method)
+        self.log_level = "off"
+        self.ccosy = CurvilinearCoordinateSystem(
+            self.reference_path,
+            self.default_lim,
+            self.eps,
+            self.eps2,
+            self.log_level,
+            self.method
+        )
 
         # get projection domain border CART and CURV
         self.cart_proj_domain_border = np.asarray(self.ccosy.projection_domain())
