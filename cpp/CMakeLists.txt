@@ -96,7 +96,7 @@ foreach (target IN ITEMS crccosy)
     # TODO: Check whether each warning flag is actually supported by the compiler before adding it
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wconversion
-                -pedantic -Wfatal-errors -Wno-unused-parameter)
+                -pedantic -Wfatal-errors -Wno-unused-parameter -Wno-unused-function -Wno-unused-but-set-variable)
     endif ()
     if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         target_compile_options(${target} PRIVATE /W3)

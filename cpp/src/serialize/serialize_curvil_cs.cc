@@ -80,9 +80,11 @@ CurvilinearCoordinateSystem *CurvilinearCoordinateSystemExport::loadObject(
     ref_path.push_back(el);
   }
 
-  CurvilinearCoordinateSystem *cs = new CurvilinearCoordinateSystem(
+  // log level for loaded object is to default "off"
+  std::string log_level_load = "off";
+  auto *cs = new CurvilinearCoordinateSystem(
       ref_path, m_fields.default_projection_domain_limit, m_fields.eps,
-      m_fields.eps2, m_fields.method);
+      m_fields.eps2, log_level_load, m_fields.method);
 
   if (m_curvature_vec.size() > 0) {
     cs->setCurvature(m_curvature_vec);

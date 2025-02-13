@@ -23,7 +23,7 @@ Segment::Segment(const Eigen::Vector2d& pt_1, const Eigen::Vector2d& pt_2,
   this->m_1_ = this->t_1_local_[1] / this->t_1_local_[0];
   this->t_2_local_ = this->rotateToLocalFrame(t_2).normalized();
   this->m_2_ = this->t_2_local_[1] / this->t_2_local_[0];
-};
+}
 
 Eigen::Vector2d Segment::pt_1() const { return this->pt_1_; }
 

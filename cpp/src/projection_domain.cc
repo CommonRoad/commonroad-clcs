@@ -360,7 +360,7 @@ void ProjectionDomain::getSegmentDistances(const std::vector<std::unique_ptr<Seg
     // determine signed distance according to direction
     // "left" and "right" are defined in direction of the polyline
     // the unit normal vector always faces in left direction --> positive sign for "LEFT"
-    int sign;
+    int sign{0};
     if (direction == "LEFT") {
         sign = 1;
     } else if (direction == "RIGHT") {

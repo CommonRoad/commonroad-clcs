@@ -134,14 +134,13 @@ void init_module_geometry(py::module &m) {
   py::class_<geometry::CurvilinearCoordinateSystem,
              std::shared_ptr<geometry::CurvilinearCoordinateSystem>>(
       m, "CurvilinearCoordinateSystem")
-      .def(py::init<const geometry::EigenPolyline &, double, double, double, int, const std::string &>(),
+      .def(py::init<const geometry::EigenPolyline &, double, double, double,  const std::string &, int>(),
               py::arg("reference_path"),
               py::arg("default_projection_domain_limit") = 20.0,
               py::arg("eps") = 0.1,
               py::arg("eps2") = 0.01,
-              py::arg("method") = 1,
               py::arg("log_level") = "off",
-
+              py::arg("method") = 1,
           "Creates a curvilinear coordinate system aligned to the given reference path."
     "The unique projection domain along the reference path is automatically computed."
     "The absolute value of the lateral distance of the projection domain border from the reference path is"
@@ -153,8 +152,9 @@ void init_module_geometry(py::module &m) {
     "from the reference path, defaults to 20"
     "\n\n:param eps: reduces the lateral distance of the projection domain border from the reference path, defaults to 0.1"
     "\n\n:param eps2: if nonzero, add additional segments to the beginning (3 segments) and the end (2 segments) of the"
-    "reference path to enable the conversion of the points near the beginning and the end of the reference path,"
-    "eps2 defaults to 1e-4."
+    "reference path to avoid numerical imprecisions near the start and end of the reference path."
+    "\n\n:param log_level: string indicating the logging level for debugging purposes (default off)"
+    "\n\n:param method: method for computing the projection domain (valid inputs: 1, 2)"
           )
       .def("length", &geometry::CurvilinearCoordinateSystem::length,
            ":return: length of the reference path of the curvilinear "
@@ -274,10 +274,16 @@ void init_module_geometry(py::module &m) {
 
       .def("convert_to_cartesian_coords",
            &geometry::CurvilinearCoordinateSystem::convertToCartesianCoords,
+           py::arg("s"),
+           py::arg("l"),
+           py::arg("check_proj_domain") = true,
            "Transforms a point in the curvilinear coordinate frame to the "
-           "global coordinate frame.\n\n:param s: longitudinal "
-           "coordinate\n\n:param l: lateral coordinate\n\n:Returns: point in "
-           "global coordinates")
+           "global coordinate frame."
+           "\n\n:param s: longitudinal coordinate"
+           "\n\n:param l: lateral coordinate"
+           "\n\n:param check_proj_domain: If True, it is checked before transformation whether a point is within the"
+           "projection domain."
+           "\n\n:Returns: point in Cartesian coordinates")
 
       .def("cartesian_point_inside_projection_domain",
            &geometry::CurvilinearCoordinateSystem::cartesianPointInProjectionDomain,
@@ -350,21 +356,25 @@ void init_module_geometry(py::module &m) {
            "curvilinear projection domain.")
 
       .def("convert_to_curvilinear_coords",
-           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y) {
-             Eigen::Vector2d curvilinear_coord =
-                 cosy.convertToCurvilinearCoords(x, y);
+           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y, bool check_proj_domain) {
+             Eigen::Vector2d curvilinear_coord = cosy.convertToCurvilinearCoords(x, y, check_proj_domain);
              return py::cast(curvilinear_coord);
            },
-           "Transforms a Cartesian point to the curvilinear frame.\n\n:param "
-           "x: x-coordinate in the Cartesian coordinate system\n\n:param y: "
-           "y-coordinate in the Cartesian coordinate system\n\n:return: point "
-           "in the curvilinear frame.")
+           py::arg("x"),
+           py::arg("y"),
+           py::arg("check_proj_domain") = true,
+           "Transforms a Cartesian point to the curvilinear frame."
+           "\n\n:param x: x-coordinate in the Cartesian coordinate system"
+           "\n\n:param y: y-coordinate in the Cartesian coordinate system"
+           "\n\n:param check_proj_domain: If True, it is checked before transformation whether a point is within the"
+           "projection domain."
+           "\n\n:return: point in curvilinear coordinates.")
 
       .def("convert_to_curvilinear_coords_and_get_segment_idx",
-           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y) {
+           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y, bool check_proj_domain) {
              int idx = -1;
              Eigen::Vector2d tmp =
-                 cosy.convertToCurvilinearCoordsAndGetSegmentIdx(x, y, idx);
+                 cosy.convertToCurvilinearCoordsAndGetSegmentIdx(x, y, idx, check_proj_domain);
              std::vector<double> pos;
              pos.push_back(tmp(0));
              pos.push_back(tmp(1));
@@ -373,23 +383,22 @@ void init_module_geometry(py::module &m) {
              out.append(idx);
              return out;
            },
+           py::arg("x"),
+           py::arg("y"),
+           py::arg("check_proj_domain") = true,
            "Transforms a Cartesian point to the curvilinear frame and returns "
-           "the segment index, in which the point is contained.\n\n:param x: "
-           "x-coordinate in the Cartesian coordinate system\n\n:param y: "
-           "y-coordinate in the Cartesian coordinate system\n\n:return: (point "
-           "in the curvilinear frame, segment index in which the point is "
-           "contained)")
+           "the segment index, in which the point is contained."
+           "\n\n:param x: x-coordinate in the Cartesian coordinate system"
+           "\n\n:param y: y-coordinate in the Cartesian coordinate system"
+           "\n\n:return: list [point in curvilinear coordinates, associated segment index]")
 
-      .def(
-          "convert_list_of_polygons_to_curvilinear_coords_and_rasterize",
+      .def("convert_list_of_polygons_to_curvilinear_coords_and_rasterize",
           [](geometry::CurvilinearCoordinateSystem &cosy,
              const std::vector<geometry::EigenPolyline> &polygons,
              const std::vector<int> groups_of_polygons, int num_polygon_groups,
              int num_omp_threads) {
-            std::vector<std::vector<geometry::EigenPolyline>>
-                transformed_polygon;
-            std::vector<std::vector<geometry::EigenPolyline>>
-                transformed_polygon_rasterized;
+            std::vector<std::vector<geometry::EigenPolyline>> transformed_polygon;
+            std::vector<std::vector<geometry::EigenPolyline>> transformed_polygon_rasterized;
 
             cosy.convertListOfPolygonsToCurvilinearCoordsAndRasterize(
                 polygons, groups_of_polygons, num_polygon_groups,

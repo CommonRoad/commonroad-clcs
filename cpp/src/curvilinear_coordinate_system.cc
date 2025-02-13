@@ -9,9 +9,10 @@ namespace geometry {
 
 CurvilinearCoordinateSystem::CurvilinearCoordinateSystem(
     const EigenPolyline& reference_path, double default_projection_domain_limit,
-    double eps, double eps2, int method, const std::string &log_level) :
-    eps_(eps), eps2_(eps2),
+    double eps, double eps2, const std::string &log_level, int method) :
     default_projection_domain_limit_(default_projection_domain_limit),
+    eps_(eps),
+    eps2_(eps2),
     method_(method) {
 
   // initialize logger
@@ -214,20 +215,26 @@ Eigen::Vector2d CurvilinearCoordinateSystem::tangent(double s) const {
 }
 
 Eigen::Vector2d CurvilinearCoordinateSystem::convertToCartesianCoords(
-    double s, double l) const {
+    double s, double l, bool check_proj_domain) const {
     // get idx of segment corresponding to longitudinal coordinate s
     int idx = this->path_segments_ptr->findSegmentIndex(s);
+
     // check if point is within curvilinear projection domain
-    bool in_longitudinal_bounds;
-    bool in_lateral_bounds;
-    std::tie(in_longitudinal_bounds, in_lateral_bounds) = this->curvilinearPointInProjectionDomain(idx, s, l);
+    if (check_proj_domain) {
+        bool in_longitudinal_bounds;
+        bool in_lateral_bounds;
+        std::tie(in_longitudinal_bounds, in_lateral_bounds) =
+                this->curvilinearPointInProjectionDomain(idx, s, l);
 
-    if (!in_longitudinal_bounds) {
-        throw CurvilinearProjectionDomainLongitudinalError();
-    }
+        if (!in_longitudinal_bounds) {
+            throw CurvilinearProjectionDomainLongitudinalError();
+        }
 
-    if (!in_lateral_bounds) {
-        throw CurvilinearProjectionDomainLateralError();
+        if (!in_lateral_bounds) {
+            throw CurvilinearProjectionDomainLateralError();
+        }
+    } else {
+        CLCSLogger::getLogger()->debug("<convertToCartesianCoords()> Converting without projection domain check");
     }
 
     const auto &segment = this->path_segments_ptr->getSegmentByID(idx);
@@ -237,19 +244,24 @@ Eigen::Vector2d CurvilinearCoordinateSystem::convertToCartesianCoords(
 }
 
 Eigen::Vector2d CurvilinearCoordinateSystem::convertToCurvilinearCoords(
-    double x, double y) const {
+    double x, double y, bool check_proj_domain) const {
   int segment_idx = -1;
-  return this->convertToCurvilinearCoordsAndGetSegmentIdx(x, y, segment_idx);
+  return this->convertToCurvilinearCoordsAndGetSegmentIdx(x, y, segment_idx, check_proj_domain);
 }
 
 Eigen::Vector2d
 CurvilinearCoordinateSystem::convertToCurvilinearCoordsAndGetSegmentIdx(
-    double x, double y, int &segment_idx) const {
-  bool is_in_projection_domain = this->cartesianPointInProjectionDomain(x, y);
+    double x, double y, int &segment_idx, bool check_proj_domain) const {
 
   // check if in projection domain
-  if (!is_in_projection_domain) {
-    throw CartesianProjectionDomainError();
+  if (check_proj_domain) {
+      bool is_in_projection_domain = this->cartesianPointInProjectionDomain(x, y);
+
+      if (!is_in_projection_domain) {
+          throw CartesianProjectionDomainError();
+      }
+  } else {
+      CLCSLogger::getLogger()->debug("<convertToCurvilinearCoords()> Converting without projection domain check");
   }
 
   /* Determine segment candidates:
@@ -274,7 +286,6 @@ CurvilinearCoordinateSystem::convertToCurvilinearCoordsAndGetSegmentIdx(
   }
 
   if (candidates.empty()) {
-    std::cout << "Coordinate: " << x << ", " << y << std::endl;
     throw CartesianProjectionDomainError();
   }
 
@@ -782,9 +793,7 @@ void CurvilinearCoordinateSystem::determineCurvilinearCoordinatesAndSegmentIdx(
           best_idx = std::get<1>(candidate_segments_of_points[orig_idx][0]);
         } else {
           // Case 3: point has no candidate segment -> outside of projection domain?
-          throw std::logic_error(
-              "<CurvilinearCoordinateSystem/convertToCurvilinearCoords> "
-              "Coordinate outside of projection domain.");
+          throw CartesianProjectionDomainError();
         }
         groups_of_curvil_points[i][j] =
             std::make_tuple(best_segment, s_coord[best_segment][best_idx],

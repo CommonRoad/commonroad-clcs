@@ -69,8 +69,6 @@ public:
     Point(const Eigen::Vector2d& coordinates);
     // overloaded "<" operator:
     bool operator<(const Point &p) const;
-    // prints out point to console
-    void Print();
 
     // getters for coordinates
     Eigen::Vector2d coordinates() const {return coordinates_;}
@@ -137,8 +135,6 @@ struct Intersections
 public:
     // add an intersection to map_segments_to_point_
     void Add(const Point &point);
-    // prints all intersections stored in map_segments_to_point_
-    void Print();
 
     // creates map of segments to pair <intersecting segment, intersection point>
     std::unordered_map<int, std::vector<std::pair<int, Eigen::Vector2d>>> getMapSegmentToSegment();
@@ -171,9 +167,6 @@ public:
     // vector of segments to check for intersections
     const std::vector<SegmentLine> *vec_segments;
 
-    // prints out all entries currently in m_entries
-    void Print();
-
     // get entry for a given segment number
     int FindEntryBySegID(const int seg_id) const;
     // insert an entry in vec_entries
@@ -199,11 +192,6 @@ private:
  * @param &intersection_point: intersection point (in case Segments intersect)
  */
 static bool CheckIntersection(const SegmentLine &seg_a, const SegmentLine &seg_b, Eigen::Vector2d& intersection_point);
-
-/**
- * Function uses brute-force approach between all pairs of segments to test for intersection
- */
-void AllPairsIntersections(const std::vector<SegmentLine> &segs, Intersections &intersections);
 
 /**
  * Function determines intersections between a set of line segments via a vertical sweep line approach
