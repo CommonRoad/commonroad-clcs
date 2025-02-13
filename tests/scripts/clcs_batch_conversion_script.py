@@ -3,7 +3,6 @@ import time
 import numpy as np
 import pickle
 
-from commonroad_clcs import pycrccosy
 from commonroad_clcs.clcs import CurvilinearCoordinateSystem
 from commonroad_clcs.config import (
     CLCSParams,
@@ -88,11 +87,8 @@ np.testing.assert_allclose(p_cartesian, cartesian_points, atol=1e-3, rtol=0)
 list_p_curv = list()
 t0 = time.perf_counter()
 for pt in cartesian_points:
-    # try:
     p_curv = cosy.convert_to_curvilinear_coords(pt[0], pt[1], check_proj_domain=True)
     list_p_curv.append(p_curv)
-    # except pycrccosy.CartesianProjectionDomainError:
-    #     pass
 print(f"Cartesian to Curvilinear single conversion took: {time.perf_counter() - t0} s")
 
 
