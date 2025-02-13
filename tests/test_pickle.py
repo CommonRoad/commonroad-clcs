@@ -4,7 +4,6 @@ import unittest
 import pickle
 
 import numpy as np
-from parameterized import param
 
 from commonroad_clcs import pycrccosy
 from commonroad_clcs.clcs import CurvilinearCoordinateSystem

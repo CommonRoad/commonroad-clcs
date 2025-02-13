@@ -196,8 +196,6 @@ class CLCSParams(BaseParam):
     processing_option: ProcessingOption = ProcessingOption.RESAMPLE
 
     # ===== parameters for C++ backend
-    # flag deciding whether to check containment within projection domain before transforming a point
-    use_proj_domain: bool = True
     # default lateral projection domain limit
     default_proj_domain_limit: float = 40.0
     # C++ logging level | Options: "off", "critical", "err", "warn", "info", "debug", "trace"

@@ -77,8 +77,8 @@ class CurvilinearCoordinateSystem
                               double default_projection_domain_limit = 20.,
                               double eps = 0.1,
                               double eps2 = 1e-4,
-                              int method = 1,
-                              const std::string &log_level = "off");
+                              const std::string &log_level = "off",
+                              int method = 1);
 
   /**
    * Getter for default projection domain limit
@@ -261,18 +261,22 @@ class CurvilinearCoordinateSystem
    *
    * @param s longitudinal coordinate
    * @param l lateral coordinate
+   * @param check_proj_domain If True, it is checked before transformation whether a point is within the projection
+   * domain. If the check fails, an error is thrown.
    * @return point in global coordinates
    */
-  Eigen::Vector2d convertToCartesianCoords(double s, double l) const;
+  Eigen::Vector2d convertToCartesianCoords(double s, double l, bool check_proj_domain = true) const;
 
   /**
    * Transforms a Cartesian point (x, y) to curvilinear coordinates.
    *
    * @param x x-coordinate in the Cartesian coordinate system
    * @param y y-coordinate in the Cartesian coordinate system
+   * @param check_proj_domain If True, it is checked before transformation whether a point is within the projection
+   * domain. If the check fails, an error is thrown.
    * @return point in the curvilinear frame.
    */
-  Eigen::Vector2d convertToCurvilinearCoords(double x, double y) const;
+  Eigen::Vector2d convertToCurvilinearCoords(double x, double y, bool check_proj_domain = true) const;
 
   /**
    * Transforms a Cartesian point (x, y) to curvilinear coords and returns the corresponding segment index.
@@ -280,9 +284,12 @@ class CurvilinearCoordinateSystem
    * @param[in] x x-coordinate in the Cartesian coordinate system
    * @param[in] y y-coordinate in the Cartesian coordinate system
    * @param[out] segment index, in which the point is contained
+   * @param check_proj_domain If True, it is checked before transformation whether a point is within the projection
+   * domain. If the check fails, an error is thrown.
    * @return point in the curvilinear frame.
    */
-  Eigen::Vector2d convertToCurvilinearCoordsAndGetSegmentIdx(double x, double y, int &segment_idx) const;
+  Eigen::Vector2d convertToCurvilinearCoordsAndGetSegmentIdx(
+          double x, double y, int &segment_idx, bool check_proj_domain = true) const;
 
   /**
    * Transforms a rectangle in curvilinear coordinates to the Cartesian coordinates.
