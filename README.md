@@ -56,6 +56,9 @@ mkdocs build
 ```
 You can browse the doc by launching `./docs/site/index.html`
 
+## :busts_in_silhouette: Authors
+**Maintainer**: Gerald Würsching. **Contributors** (alphabetic order by last name): Peter Kocsis, Edmond Irani Liu,
+Stefanie Manzinger, Tobias Markus, Evald Nexhipi, Vitaliy Rusinov, Daniel Tar, Gerald Würsching
 
 ## :speech_balloon: References
 If you use our software for research, please cite:
