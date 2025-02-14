@@ -32,11 +32,14 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
+# plot output folder
+output/
+
 # third party directories which are pulled by CMake FetchContent
 third_party/pybind11/
 
-# Sphinx documentation
-doctrees
+# MkDocs Documentation
+site/
 
 # Jupyter Notebook
 .ipynb_checkpoints

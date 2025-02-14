@@ -1,0 +1,37 @@
+site_name: CommonRoad Curvilinear Coordinate System
+
+theme:
+  name: readthedocs
+  logo: assets/commonroad_white150.png
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            show_root_heading: false
+            heading_level: 3
+            show_module_names: False
+  - search
+
+nav:
+  - Introduction:
+      - "Introduction": index.md
+
+  - Python API Documentation:
+      - "Curvilinear Coordinate System": clcs.md
+      - "Configuration": config.md
+      - "Utils": utility.md
+      - Reference Path Processing:
+          - "Base Processor": processor.md
+          - "Processor Factory": factory.md
+          - "Implementations": implementation.md
+      - Helper Modules:
+          - "Evaluation": evaluation.md
+          - "Path Smoothing": smoothing.md
+          - "Visualization": visualization.md
+      - "Python Binding pycrccosy": pycrccosy.md
+
+  - C++ API Documentation:
+    - "C++ API": cpp_api.md
