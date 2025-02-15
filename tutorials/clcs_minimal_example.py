@@ -42,7 +42,7 @@ ref_path = ReferencePathPlanner(
 # initialize CLCS params
 params = CLCSParams()
 
-# pre-process reference path: Here we smooth the path using curve subdivision
+# pre-process reference path: Here we smooth the path using curve subdivision and resample is adaptively
 params.processing_option = ProcessingOption.CURVE_SUBDIVISION
 params.subdivision.max_curvature = 0.15
 params.resampling.option = ResamplingOption.ADAPTIVE
