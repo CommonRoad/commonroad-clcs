@@ -63,12 +63,14 @@ def plot_ref_path_curvature(
 
 def compare_ref_path_curvatures(
         ref_path_original: np.ndarray,
-        ref_path_modified: np.ndarray
+        ref_path_modified: np.ndarray,
+        verbose: bool = False
 ) -> Dict:
     """
     Compares curvature and curvature rates of an original and modified reference path
     :param ref_path_original: Original reference path
     :param ref_path_modified: Modified reference path
+    :param verbose: prints metrics to console
     :return Dictionary with metrics
     """
     # pathlength
@@ -116,12 +118,18 @@ def compare_ref_path_curvatures(
         "delta_kappa_dot_max": delta_curv_d_max
     }
 
+    # print to console
+    if verbose:
+        for k, v in metrics_dict.items():
+            print(f"\t {k}: \t {v}")
+
     return metrics_dict
 
 
 def compare_ref_path_deviations(
         ref_path_original: np.ndarray,
-        ref_path_modified: np.ndarray
+        ref_path_modified: np.ndarray,
+        verbose: bool = False
 ) -> Dict:
     """
     Computes deviation metrics of a modified reference path to its original reference path.
@@ -135,6 +143,7 @@ def compare_ref_path_deviations(
 
     :param ref_path_original: Original reference path
     :param ref_path_modified: Modified reference path
+    :param verbose: prints metrics to console
     :return Dictionary with metrics
     """
     # original pathlength and orientation
@@ -154,14 +163,16 @@ def compare_ref_path_deviations(
         "default_limit": 40.0,
         "eps": 0.1,
         "eps2": 2.0,
+        "logging_level": "off",
         "method": 2
     }
     curvilinear_cosy = pycrccosy.CurvilinearCoordinateSystem(
         ref_path_modified,
-        _settings["default_limit"],
-        _settings["eps"],
-        _settings["eps2"],
-        _settings["method"]
+        default_projection_domain_limit=40.0,
+        eps=0.1,
+        eps2=2.0,
+        log_level="off",
+        method=2
     )
 
     # calculate lateral deviation and orientation deviation
@@ -201,6 +212,11 @@ def compare_ref_path_deviations(
         "delta_theta_avg": delta_theta_avg,
         "delta_theta_max": delta_theta_max
     }
+
+    # print to console
+    if verbose:
+        for k, v in metrics_dict.items():
+            print(f"\t {k}: \t {v}")
 
     return metrics_dict
 

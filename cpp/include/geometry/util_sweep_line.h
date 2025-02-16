@@ -1,3 +1,9 @@
+/**
+ * @file    util_sweep_line.h
+ * @brief   Bentley-Ottmann Sweep-Line algorithm
+ * @author  Evald Nexhipi
+ */
+
 #ifndef SWEEP_LINE_UTIL_H
 #define SWEEP_LINE_UTIL_H
 
@@ -19,14 +25,6 @@
 
 #include "geometry/util.h"
 
-// TODO: Check if these definitions are required still ?
-#ifdef OS_WINDOWS
-#define srandom srand
-#define random rand
-#define RANDOM_MAX RAND_MAX
-#else
-#define RANDOM_MAX 2147483647
-#endif
 
 namespace geometry {
 
