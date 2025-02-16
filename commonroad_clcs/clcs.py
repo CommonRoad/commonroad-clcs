@@ -124,22 +124,23 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
 
     def plot_reference_states(self):
         """Plots orientation, curvature and curvature rate of ref path over arclength"""
-        plt.figure(figsize=(7, 7.5))
+        plt.figure(figsize=(7, 6.5))
         plt.suptitle("Reference path states")
         # orientation
         plt.subplot(3, 1, 1)
+        plt.subplot(3, 1, 1)
         plt.plot(self.ref_pos, self.ref_theta, color="k")
         plt.xlabel("s")
-        plt.ylabel("theta_ref")
+        plt.ylabel("orientation")
         # curvature
         plt.subplot(3, 1, 2)
         plt.plot(self.ref_pos, self.ref_curv, color="k")
         plt.xlabel("s")
-        plt.ylabel("kappa_ref")
+        plt.ylabel("curvature")
         # curvature rate
         plt.subplot(3, 1, 3)
         plt.plot(self.ref_pos, self.ref_curv_d, color="k")
         plt.xlabel("s")
-        plt.ylabel("kappa_dot_ref")
+        plt.ylabel("curvature rate")
         plt.tight_layout()
         plt.show()

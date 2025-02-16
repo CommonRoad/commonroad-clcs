@@ -1,3 +1,9 @@
+/**
+ * @file    util_sweep_line.cc
+ * @brief   Bentley-Ottmann Sweep-Line algorithm
+ * @author  Evald Nexhipi
+ */
+
 #include "geometry/util_sweep_line.h"
 
 namespace geometry {
