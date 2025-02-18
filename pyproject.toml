@@ -2,7 +2,7 @@
 name = "commonroad-clcs"
 version = "2025.1.0"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9,<=3.12"
+requires-python = ">=3.9,<3.12"
 license = { file = "LICENSE.txt" }
 authors = [
     { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
@@ -31,7 +31,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: BSD License",
     "Operating System :: POSIX :: Linux",
 ]
