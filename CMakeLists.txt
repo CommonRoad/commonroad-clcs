@@ -286,3 +286,5 @@ endif()
 #     enable_testing()
 #     add_subdirectory(cpp/tests)
 # endif()
+
+include(cmake/install.cmake)
