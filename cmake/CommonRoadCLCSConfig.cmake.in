@@ -1,0 +1,23 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Ensure dependencies are available
+find_dependency(OpenMP)
+
+if(@INSTALL_boost_src_FROM_SYSTEM@)
+    find_dependency(Boost @Boost_VERSION@)
+endif()
+
+if(@INSTALL_Eigen3_FROM_SYSTEM@)
+    find_dependency(Eigen3 @Eigen3_VERSION@)
+endif()
+
+if(@INSTALL_spdlog_FROM_SYSTEM@)
+    find_dependency(spdlog @spdlog_VERSION@)
+endif()
+
+# Add targets
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+check_required_components("@PROJECT_NAME@")
