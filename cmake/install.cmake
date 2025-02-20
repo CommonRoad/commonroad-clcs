@@ -86,7 +86,7 @@ elseif(TARGET eigen)
 endif()
 
 # Required for export()
-foreach(foreign_target spdlog::spdlog Eigen3::Eigen)
+foreach(foreign_target spdlog::spdlog Eigen3::Eigen s11n::s11n)
     get_target_property(aliased_target ${foreign_target} ALIASED_TARGET)
     if(aliased_target)
         set(foreign_target ${aliased_target})

@@ -263,7 +263,7 @@ endif()
 
 
 # Add third party subdirectory for building libs11n
-if(CR_CLCS_BUILD_S11N)
+if(CR_CLCS_BUILD_S11N AND NOT TARGET s11n::s11n)
     add_subdirectory(third_party/libs11n)
 endif()
 
