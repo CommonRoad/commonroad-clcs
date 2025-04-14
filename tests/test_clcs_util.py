@@ -101,7 +101,6 @@ class TestCLCSUtil(unittest.TestCase):
                 msg="End points of original and resampled polylines should be the same."
             )
 
-
     def test_resample_polyline_cpp(self):
         """Test own cpp method for resampling"""
         # sampling intervals
@@ -138,7 +137,6 @@ class TestCLCSUtil(unittest.TestCase):
         # check same end point
         self.assertTrue(np.allclose(self.reference_path_test[-1], reference_path_resampled_dense[-1]),
                         msg="End points of original and resampled polylines should be the same.")
-
 
     def test_resample_polyline_with_length_check(self):
         """Test resampling with length check"""
@@ -258,6 +256,45 @@ class TestCLCSUtil(unittest.TestCase):
                  label="refined")
         plt.show()
 
+    def test_fix_polyline_vertex_ordering(self):
+        """Test method for fixing incorrect vertex ordering of a polyline"""
+        # threshold
+        theta_diff_threshold = np.pi / 2
+
+        # check original path
+        theta_arr = clcs_util.compute_orientation_from_polyline(self.reference_path_test)
+        diff_theta_arr = np.diff(theta_arr)
+        self.assertTrue( all(np.abs(diff_theta_arr) < theta_diff_threshold) )
+
+        # new reference path with wrong ordering
+        half_len = int(len(self.reference_path_test) / 2)
+        ref_path_faulty = np.vstack(
+            [self.reference_path_test[:half_len],
+             self.reference_path_test[-1],
+             self.reference_path_test[half_len:-1]]
+        )
+
+        # check if wrong path is indeed faulty
+        theta_arr = clcs_util.compute_orientation_from_polyline(ref_path_faulty)
+        diff_theta_arr = np.diff(theta_arr)
+        self.assertTrue(not all(np.abs(diff_theta_arr) < theta_diff_threshold))
+
+        # fix path
+        ref_path_fixed = clcs_util.fix_polyline_vertex_ordering(
+            ref_path_faulty,
+            theta_diff_threshold
+        )
+
+        # check orientation in fixed path
+        theta_arr = clcs_util.compute_orientation_from_polyline(ref_path_fixed)
+        diff_theta_arr = np.diff(theta_arr)
+        self.assertTrue( all(np.abs(diff_theta_arr) < theta_diff_threshold) )
+
+        # check if fixed path is identical to original path
+        self.assertTrue(
+            np.allclose(self.reference_path_test, ref_path_fixed),
+            msg="Fixed path and original path should be identical."
+        )
 
 if __name__ == '__main__':
     unittest.main()

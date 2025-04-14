@@ -680,3 +680,34 @@ def extrapolate_polyline(
         raise ValueError(f"Invalid argument where={where}. Use front or back.")
 
     return resample_polyline(extended_polyline, step=resample_step)
+
+
+def fix_polyline_vertex_ordering(
+        polyline: np.ndarray,
+        theta_diff_threshold: float = np.pi/2
+) -> np.ndarray:
+    """
+    Fixes polyline with incorrect vertex ordering. Correct vertex ordering is determined based on threshold for the
+    orientation difference between consecutive vertices.
+    :param polyline: input polyline
+    :param theta_diff_threshold: threshold for max. orientation difference between consecutive vertices
+    :return fixed polyline
+    """
+    # we assume that the "correct" direction of the polyline is given by the first two points
+    ordered_polyline = polyline[0:2, :]
+
+    # loop over points 2:n
+    for j in range(2, len(polyline)):
+        ordered_polyline = np.vstack([ordered_polyline, polyline[j]])
+
+        # iteratively push added point one place back if max orientation diff is too high
+        for i in range(len(ordered_polyline) - 1, 0, - 1):
+            _theta = np.unwrap(compute_orientation_from_polyline(ordered_polyline))
+            _diff_theta = np.diff(_theta)
+
+            if not all(np.abs(_diff_theta) < theta_diff_threshold):
+                ordered_polyline[[i, i - 1]] = ordered_polyline[[i - 1, i]]
+            else:
+                break
+
+    return ordered_polyline
