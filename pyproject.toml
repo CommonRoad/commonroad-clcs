@@ -77,7 +77,7 @@ cmake.version = ">=3.24"
 [tool.cibuildwheel]
 # Skip PyPy
 skip = "pp*"
-archs = ["auto"]
+archs = ["x86_64"]
 environment = { PIP_DISABLE_PIP_VERSION_CHECK = "1" }
 build-verbosity = 1
 
