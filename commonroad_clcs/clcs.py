@@ -36,15 +36,23 @@ class CurvilinearCoordinateSystem(pycrccosy.CurvilinearCoordinateSystem):
         - allows interacting with the C++ object via the pybind methods
     """
 
-    def __init__(self, reference_path: np.ndarray, params: CLCSParams, preprocess_path=True):
+    def __init__(
+            self,
+            reference_path: np.ndarray,
+            params: CLCSParams,
+            preprocess_path=True,
+            validity_checks=True,
+    ):
         """
         :param reference_path: reference path as numpy ndarray
         :param params: config parameters for reference path pre-processing and CLCS
         :param preprocess_path: Flag indicating whether the reference path should be pre-processed
                                 Set to False if reference path is pre-processed before already
+        :param validity_checks: If True, performs validity checks for the reference path before instantiation
         """
         # reference path checks
-        self.check_ref_path_validity(reference_path)
+        if validity_checks:
+            self.check_ref_path_validity(reference_path)
 
         if preprocess_path:
             ref_path_processor = ProcessorFactory.create_processor(params)
