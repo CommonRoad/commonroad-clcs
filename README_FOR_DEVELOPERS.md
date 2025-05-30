@@ -71,7 +71,18 @@ pip install -v --no-build-isolation --config-settings=editable.rebuild=true --co
 gdb -ex r --args python compute_reachable_set.py
 ```
 
+## Building Python Bindings Directly
 
+Building the Python bindings directly, i.e., without using scikit-build-core, can be helpful e.g. to set up your IDE.
+To do so, you need to add the following parameters to your CMake invocation.
+```
+-DCR_CLCS_BUILD_PYTHON_BINDINGS=ON
+-DCMAKE_PREFIX_PATH=/path/to/site-packages
+```
+The first parameter enables the Python bindings for the CLCS.
+The second parameters adds the path to your Python installation's `site-packages` directory to the CMake search path like scikit-build-core does.
+If you are using an Anaconda/Miniconda environment, make sure to point this to the `site-packages` directory of the correct environment.
+Please make sure that `pybind11` with the version specified in the `build-system.requires` is installed in this environment.
 
 
 ## Running Unit Tests

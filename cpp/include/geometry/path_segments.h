@@ -2,12 +2,11 @@
 #define PATH_SEGMENTS_H
 
 #include <vector>
-#include <chrono>
 #include <numeric>
-
+#include <optional>
+#include <list>
 #include "geometry/segment.h"
 #include "geometry/clcs_types.h"
-#include "geometry/clcs_exceptions.h"
 #include "geometry/clcs_logger.h"
 
 
