@@ -1,5 +1,7 @@
 #include "geometry/path_segments.h"
 
+#include "geometry/clcs_exceptions.h"
+
 namespace geometry {
 
 // constructor

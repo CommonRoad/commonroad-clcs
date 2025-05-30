@@ -5,6 +5,7 @@ theme:
   logo: assets/commonroad_white150.png
 
 plugins:
+  - search
   - mkdocstrings:
       handlers:
         python:
@@ -13,7 +14,20 @@ plugins:
             show_root_heading: false
             heading_level: 3
             show_module_names: False
-  - search
+  - mkdoxy:
+      projects:
+        clcs:
+          src-dirs: "cpp/src cpp/include"
+          full-doc: True
+          doxy-cfg:
+            FILE_PATTERNS: "*.cc *.h*"
+            RECURSIVE: True
+            EXTRACT_ALL: True
+            EXTRACT_PACKAGE: True
+            EXTRACT_STATIC: True
+            EXTRACT_ANON_NSPACES: True
+            JAVADOC_AUTOBRIEF: True
+            TEMPLATE_RELATIONS: True
 
 nav:
   - Introduction:
@@ -34,4 +48,24 @@ nav:
       - "Python Binding pycrccosy": pycrccosy.md
 
   - C++ API Documentation:
-    - "C++ API": cpp_api.md
+      - "Links": "clcs/links.md"
+      - "Classes":
+          - "Class List": "clcs/annotated.md"
+          - "Class Index": "clcs/classes.md"
+          - "Class Hierarchy": "clcs/hierarchy.md"
+          - "Class Members": "clcs/class_members.md"
+          - "Class Member Functions": "clcs/class_member_functions.md"
+          - "Class Member Variables": "clcs/class_member_variables.md"
+          - "Class Member Typedefs": "clcs/class_member_typedefs.md"
+          - "Class Member Enumerations": "clcs/class_member_enums.md"
+      - "Namespaces":
+          - "Namespace List": "clcs/namespaces.md"
+          - "Namespace Members": "clcs/namespace_members.md"
+          - "Namespace Member Functions": "clcs/namespace_member_functions.md"
+          - "Namespace Member Variables": "clcs/namespace_member_variables.md"
+          - "Namespace Member Typedefs": "clcs/namespace_member_typedefs.md"
+          - "Namespace Member Enumerations": "clcs/namespace_member_enums.md"
+      - "Functions": "clcs/functions.md"
+      - "Variables": "clcs/variables.md"
+      - "Macros": "clcs/macros.md"
+      - "Files": "clcs/files.md"

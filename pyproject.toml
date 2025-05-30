@@ -2,7 +2,7 @@
 name = "commonroad-clcs"
 version = "2025.1.1"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9,<3.12"
+requires-python = ">=3.10,<3.14"
 license = { file = "LICENSE.txt" }
 authors = [
     { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
@@ -23,14 +23,15 @@ dependencies = [
     "omegaconf>=2.1.1",
     "scipy>=1.4.1",
     "shapely>=2.0.0",
-    "osqp~=0.6.5"
+    "osqp~=0.6.5",
 ]
 
 classifiers = [
     "Programming Language :: C++",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: BSD License",
     "Operating System :: POSIX :: Linux",
 ]
@@ -43,12 +44,13 @@ Source = "https://github.com/CommonRoad/commonroad-curvilinear-coordinate-system
 [project.optional-dependencies]
 test = [
     "pytest>=3.8.0",
-    "parameterized~=0.9.0"
+    "parameterized~=0.9.0",
 ]
 docs = [
     "mkdocs>=1.6.1,<2.0.0",
     "mkdocstrings-python>=1.8.0,<2.0.0",
-    "mkdocs-material>=9.5.10,<10.0.0"
+    "mkdocs-material>=9.5.10,<10.0.0",
+    "mkdoxy~=1.2.4",
 ]
 build = [
     "scikit-build-core~=0.8.0",
@@ -73,6 +75,9 @@ install.components = ["pycrccosy"]
 
 minimum-version = "0.8"
 cmake.version = ">=3.24"
+
+[tool.scikit-build.cmake.define]
+CR_CLCS_BUILD_PYTHON_BINDINGS = "ON"
 
 [tool.cibuildwheel]
 # Skip PyPy

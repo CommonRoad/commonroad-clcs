@@ -41,20 +41,17 @@ add_library(crccosy ${CR_CLCS_SRC_FILES})
 # add header files
 target_sources(crccosy PRIVATE ${CR_CLCS_HDR_FILES})
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.23.0)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.23.0)
     target_sources(crccosy
             INTERFACE
             FILE_SET crccosy_headers
             TYPE HEADERS
             BASE_DIRS include
             FILES ${CR_CLCS_HDR_FILES})
-endif()
+endif ()
 
 # set compile features
 target_compile_features(crccosy PUBLIC cxx_lambdas cxx_auto_type)
-
-# build position independent code so that we can link this in the Python bindings (builds shared lib)
-set_property(TARGET crccosy PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(crccosy
         PUBLIC
@@ -73,32 +70,32 @@ target_link_libraries(crccosy
         PUBLIC
         Eigen3::Eigen
         Boost::headers
+        Boost::geometry
         spdlog::spdlog
 )
 
 # link libs11n
-if(NOT CR_CLCS_BUILD_S11N)
+if (CR_CLCS_BUILD_S11N)
+    message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been ENABLED for crccosy")
+    target_link_libraries(crccosy PUBLIC s11n::s11n)
+    target_compile_definitions(crccosy PRIVATE -DENABLE_SERIALIZER=1)
+else ()
     message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been DISABLED for crccosy")
     target_compile_definitions(crccosy PRIVATE -DENABLE_SERIALIZER=0)
-else()
-    message(STATUS "<CommonRoadCLCS> Serialization and pickling support have been ENABLED for crccosy")
-    target_link_libraries(crccosy
-            PUBLIC
-            s11n::s11n
-    )
-    target_compile_definitions(crccosy PRIVATE -DENABLE_SERIALIZER=1)
-endif()
+endif ()
 
 add_library(CommonRoadCLCS::crccosy ALIAS crccosy)
 
-foreach (target IN ITEMS crccosy)
-    # this adds many warnings to the build. They usually help to find some bugs
-    # TODO: Check whether each warning flag is actually supported by the compiler before adding it
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-        target_compile_options(${target} PRIVATE -Wall -Wextra -Wconversion
-                -pedantic -Wfatal-errors -Wno-unused-parameter -Wno-unused-function -Wno-unused-but-set-variable)
-    endif ()
-    if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(${target} PRIVATE /W3)
-    endif ()
-endforeach ()
+if (${PROJECT_NAME}_IS_TOP_LEVEL)
+    foreach (target IN ITEMS crccosy)
+        # this adds many warnings to the build. They usually help to find some bugs
+        # TODO: Check whether each warning flag is actually supported by the compiler before adding it
+        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+            target_compile_options(${target} PRIVATE -Wall -Wextra -Wconversion
+                    -pedantic -Wfatal-errors -Wno-unused-parameter -Wno-unused-function -Wno-unused-but-set-variable)
+        endif ()
+        if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+            target_compile_options(${target} PRIVATE /W3)
+        endif ()
+    endforeach ()
+endif ()

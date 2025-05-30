@@ -77,16 +77,62 @@ if(_enable_package_export)
             FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake
             NAMESPACE ${PROJECT_NAME}::
     )
-elseif(TARGET eigen)
-    # Workaround for required Eigen export
-    export(TARGETS eigen
-            FILE ${PROJECT_BINARY_DIR}/eigen-export-private.cmake
-            NAMESPACE ${PROJECT_NAME}_private::
-    )
 endif()
 
+set(foreign_targets_base
+        spdlog::spdlog
+        Eigen3::Eigen
+        Boost::headers
+        Boost::geometry
+)
+set(foreign_targets ${foreign_targets_base})
+set(checked)
+
+function(check_target target)
+    if(target IN_LIST checked)
+        return()
+    endif()
+    list(APPEND checked ${target})
+
+    if(NOT TARGET ${target})
+        list(REMOVE_ITEM foreign_targets ${target})
+        set(foreign_targets ${foreign_targets} PARENT_SCOPE)
+        message(STATUS "invalid target: ${target}")
+        return()
+    endif()
+
+    get_target_property(target_deps ${target} INTERFACE_LINK_LIBRARIES)
+    if(target_deps STREQUAL "target_deps-NOTFOUND")
+        return()
+    endif()
+    message(VERBOSE "${target} deps: ${target_deps}")
+
+    foreach(target ${target_deps})
+        string(REGEX REPLACE "\\$<LINK_ONLY:(.+)>" "\\1" target ${target})
+        list(APPEND foreign_targets ${target})
+        check_target(${target})
+    endforeach()
+
+    list(REMOVE_DUPLICATES foreign_targets)
+
+    set(foreign_targets ${foreign_targets} PARENT_SCOPE)
+    set(checked ${checked} PARENT_SCOPE)
+endfunction()
+
+foreach(foreign_target ${foreign_targets_base})
+    check_target(${foreign_target})
+endforeach()
+
+list(REMOVE_DUPLICATES foreign_targets)
+
+# We never build dl/backtrace ourselves
+list(REMOVE_ITEM foreign_targets dl)
+list(REMOVE_ITEM foreign_targets backtrace)
+
+message(STATUS "${foreign_targets}")
+
 # Required for export()
-foreach(foreign_target spdlog::spdlog Eigen3::Eigen s11n::s11n)
+foreach(foreign_target ${foreign_targets})
     get_target_property(aliased_target ${foreign_target} ALIASED_TARGET)
     if(aliased_target)
         set(foreign_target ${aliased_target})
