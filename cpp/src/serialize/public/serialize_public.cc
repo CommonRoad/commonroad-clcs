@@ -16,14 +16,14 @@
 namespace geometry {
 namespace serialize {
 
-int serialize(CurvilinearCoordinateSystemConstPtr cs,
+int serialize(const CurvilinearCoordinateSystem &cs,
               std::ostream &output_stream, const char *format) {
   std::ios_base::fmtflags fmt_flags = output_stream.flags();
   std::streamsize old_precision = output_stream.precision();
   // std::hexfloat(output_stream); // hexadecimal float representation
   output_stream.precision(std::numeric_limits<double>::max_digits10 - 1);
-  CurvilinearCoordinateSystemExport *cs_export =
-      static_cast<CurvilinearCoordinateSystemExport *>(cs->exportThis());
+  auto *cs_export =
+      dynamic_cast<CurvilinearCoordinateSystemExport *>(cs.exportThis());
   if (!cs_export) {
     output_stream.precision(old_precision);
     output_stream.flags(fmt_flags);  // restore flags

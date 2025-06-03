@@ -996,10 +996,7 @@ CurvilinearCoordinateSystem::convertToCurvilinearCoords(
 #if ENABLE_SERIALIZER
 
 int CurvilinearCoordinateSystem::serialize(std::ostream &output_stream) const {
-  return serialize::serialize(
-      std::static_pointer_cast<const CurvilinearCoordinateSystem>(
-          this->shared_from_this()),
-      output_stream);
+  return serialize::serialize(*this, output_stream);
 }
 
 CurvilinearCoordinateSystemConstPtr CurvilinearCoordinateSystem::deserialize(

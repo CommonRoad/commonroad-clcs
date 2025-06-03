@@ -53,17 +53,19 @@ docs = [
     "mkdoxy~=1.2.4",
 ]
 build = [
-    "scikit-build-core~=0.8.0",
-    "pybind11~=2.12.0",
+    "scikit-build-core~=0.11.0",
+    "nanobind~=2.2.0",
     "pathspec>=0.12.1",
     "pyproject-metadata>=0.7.1",
+    "typing_extensions~=4.12.2",
     "cmake (>=3.24, <4.0)",
 ]
 
 [build-system]
 requires = [
-    "scikit-build-core~=0.8.0",
-    "pybind11~=2.12.0",
+    "scikit-build-core~=0.11.0",
+    "nanobind~=2.2.0",
+    "typing_extensions~=4.12.2",
     "cmake (>=3.24, <4.0)",
 ]
 build-backend = "scikit_build_core.build"
