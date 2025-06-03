@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <vector>
 
 #include "geometry/clcs_types.h"
