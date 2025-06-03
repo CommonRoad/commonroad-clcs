@@ -71,23 +71,13 @@ option(CR_CLCS_BUILD_PYTHON_BINDINGS "Build Python bindings for CLCS" OFF)
 # IMPORTANT: DO NOT MOVE this section, in particular the calls to find_package(Python)
 # and find_package(pybind11), without careful consideration
 if (CR_CLCS_BUILD_PYTHON_BINDINGS)
-    # Scikit-Build does not add your site-packages to the search path
-    # automatically, so we need to add it _or_ the pybind11 specific directory
-    # here.
+    find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+
     execute_process(
-            COMMAND "${PYTHON_EXECUTABLE}" -c
-            "import pybind11; print(pybind11.get_cmake_dir())"
-            OUTPUT_VARIABLE _tmp_dir
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-    list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
-    set(Python_FIND_VIRTUALENV FIRST)
-
-    set(PYBIND11_FINDPYTHON ON)
-    find_package(Python 3.7 REQUIRED COMPONENTS Development.Module Interpreter)
-
-    # Now we can find pybind11
-    find_package(pybind11 2.12.0 CONFIG REQUIRED)
+            COMMAND "${PYTHON_EXECUTABLE}" -m nanobind --cmake_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
+    list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+    find_package(nanobind CONFIG REQUIRED)
 
     if (SKBUILD)
         # SKBUILD_SELF_CONTAINED controls whether we try to build all dependencies

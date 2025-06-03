@@ -6,7 +6,7 @@
 namespace geometry {
 namespace serialize {
 
-int serialize(CurvilinearCoordinateSystemConstPtr collision_object,
+int serialize(const CurvilinearCoordinateSystem &collision_object,
               std::ostream &output_stream,
               const char *format = SERIALIZER_DEFAULT_FORMAT);
 int deserialize(CurvilinearCoordinateSystemConstPtr &collision_object,

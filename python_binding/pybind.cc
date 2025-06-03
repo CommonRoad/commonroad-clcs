@@ -1,45 +1,45 @@
-#include <pybind11/eigen.h>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <Eigen/Dense>
-#include <optional>
-#include <vector>
-#include <string>
+#include "pybind.h"
 
 #include "geometry/curvilinear_coordinate_system.h"
 #include "geometry/segment.h"
 #include "geometry/util.h"
 
-namespace py = pybind11;
+#include <nanobind/eigen/dense.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
+#include <vector>
+#include <string>
 
-void init_module_geometry(py::module &m);
+namespace nb = nanobind;
+using namespace nb::literals;
 
 using RowMatrixXd = geometry::RowMatrixXd;
 
-PYBIND11_MODULE(pycrccosy, m) {
-  init_module_geometry(m);
+NB_MODULE(pycrccosy, module) {
+  export_geometry(module);
 
-  py::module mutil_geom = m.def_submodule(
+  auto mutil_geom = module.def_submodule(
       "Util",
       "Util is a submodule of pycrccosy containing auxiliary functions");
 
   mutil_geom.def("resample_polyline",
-                 [](Eigen::Ref<const RowMatrixXd> polyline, double step) {
+                 [](const Eigen::Ref<const RowMatrixXd> &polyline, double step) {
                    RowMatrixXd ret;
                    geometry::util::resample_polyline(polyline, step, ret);
                    return ret;
                  });
 
   mutil_geom.def("chaikins_corner_cutting",
-                 [](Eigen::Ref<const RowMatrixXd> polyline, int refinements) {
+                 [](const Eigen::Ref<const RowMatrixXd> &polyline, int refinements) {
                    RowMatrixXd ret;
                    geometry::util::chaikins_corner_cutting(polyline, refinements, ret);
                    return ret;
                  });
 
   mutil_geom.def("lane_riesenfeld_subdivision",
-                 [](Eigen::Ref<const RowMatrixXd> polyline, int degree, int refinements) {
+                 [](const Eigen::Ref<const RowMatrixXd> &polyline, int degree, int refinements) {
                     RowMatrixXd ret_polyline;
                     geometry::util::lane_riesenfeld_subdivision(polyline,
                                                                 degree,
@@ -50,26 +50,26 @@ PYBIND11_MODULE(pycrccosy, m) {
 
 
   mutil_geom.def("compute_pathlength",
-                 py::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computePathlength),
-                 py::arg("polyline"));
+                 nb::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computePathlength),
+                 "polyline"_a);
 
   mutil_geom.def("compute_curvature",
-                 py::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computeCurvature),
-                 py::arg("polyline"));
+                 nb::overload_cast<const geometry::EigenPolyline&>(&geometry::util::computeCurvature),
+                 "polyline"_a);
 
   mutil_geom.def("compute_curvature",
-                 py::overload_cast<const geometry::EigenPolyline&, int>(&geometry::util::computeCurvature),
-                 py::arg("polyline"),
-                 py::arg("digits"));
+                 nb::overload_cast<const geometry::EigenPolyline&, int>(&geometry::util::computeCurvature),
+                 "polyline"_a,
+                 "digits"_a);
 
   mutil_geom.def("get_inflection_point_idx",
-                 [](geometry::EigenPolyline polyline, int digits) {
+                 [](const geometry::EigenPolyline &polyline, int digits) {
                     return geometry::util::getInflectionPointsIdx(polyline, digits);
                 });
 
   mutil_geom.def("intersection_segment_segment",
-                 [](Eigen::Vector2d l1_pt1, Eigen::Vector2d l1_pt2,
-                    Eigen::Vector2d l2_pt1, Eigen::Vector2d l2_pt2) {
+                 [](const Eigen::Vector2d &l1_pt1, const Eigen::Vector2d &l1_pt2,
+                    const Eigen::Vector2d &l2_pt1, const Eigen::Vector2d &l2_pt2) {
 
                    Eigen::Vector2d intersection_point;
 
@@ -77,15 +77,7 @@ PYBIND11_MODULE(pycrccosy, m) {
                                                                                l2_pt1, l2_pt2,
                                                                                intersection_point);
 
-                   py::tuple return_val(2);
-                   return_val[0] = py::cast(intersect);
-                   if (intersect) {
-                    return_val[1] = py::cast(intersection_point);
-                   } else {
-                    return_val[1] = py::cast<py::none>(Py_None);
-                   }
-
-                   return return_val;
+                   return std::make_tuple(intersect, intersect ? std::optional{intersection_point} : std::nullopt);
                  },
                  "Checks if two segments intersect; if yes, returns their intersection point"
                  "\n\n:param l1_pt1: start point of first segment"
@@ -97,50 +89,52 @@ PYBIND11_MODULE(pycrccosy, m) {
 
 }
 
-void init_module_geometry(py::module &m) {
+void export_geometry(const nb::module_ &module) {
 
   // Bind custom exceptions
-  py::register_exception<geometry::CurvilinearProjectionDomainLongitudinalError>
-          (m, "CurvilinearProjectionDomainLongitudinalError");
-  py::register_exception<geometry::CurvilinearProjectionDomainLateralError>
-          (m, "CurvilinearProjectionDomainLateralError");
-  py::register_exception<geometry::CartesianProjectionDomainError>
-          (m, "CartesianProjectionDomainError");
+  // Disable clang-tidy lints that complain about exceptions not being thrown
+  //NOLINTBEGIN
+  nb::exception<geometry::CurvilinearProjectionDomainLongitudinalError>
+          (module, "CurvilinearProjectionDomainLongitudinalError");
+  nb::exception<geometry::CurvilinearProjectionDomainLateralError>
+          (module, "CurvilinearProjectionDomainLateralError");
+  nb::exception<geometry::CartesianProjectionDomainError>
+          (module, "CartesianProjectionDomainError");
+  //NOLINTEND
 
   // class Segment()
-  py::class_<geometry::Segment>(m, "Segment")
-      .def(py::init<const Eigen::Vector2d &, Eigen::Vector2d &,
+  nb::class_<geometry::Segment>(module, "Segment")
+      .def(nb::init<const Eigen::Vector2d &, Eigen::Vector2d &,
                     Eigen::Vector2d &, Eigen::Vector2d &>(),
            ":param p_1: start point of the segment\n:param p_2: end point of "
            "the segment\n:param t_1: tangent vector at the start of the "
            "segment\n:param t_2: tangent vector at the end of the segment")
 
-      .def_property_readonly("pt_1", &geometry::Segment::pt_1,
+      .def_prop_ro("pt_1", &geometry::Segment::pt_1,
                              ":return: start point of segment in Cartesian coordinates")
-      .def_property_readonly("pt_2", &geometry::Segment::pt_2,
+      .def_prop_ro("pt_2", &geometry::Segment::pt_2,
                              ":return: end point of segment in Cartesian coordinates")
-      .def_property_readonly("length", &geometry::Segment::length,
+      .def_prop_ro("length", &geometry::Segment::length,
                                 ":return: segment length")
-      .def_property_readonly("normal_segment_start", &geometry::Segment::normalSegmentStart,
+      .def_prop_ro("normal_segment_start", &geometry::Segment::normalSegmentStart,
                              ":return: normal vector at the start of the segment")
-      .def_property_readonly("normal_segment_end", &geometry::Segment::normalSegmentEnd,
+      .def_prop_ro("normal_segment_end", &geometry::Segment::normalSegmentEnd,
                              ":return: normal vector at the end of the segment")
-      .def_property_readonly("tangent_segment_start", &geometry::Segment::tangentSegmentStart,
+      .def_prop_ro("tangent_segment_start", &geometry::Segment::tangentSegmentStart,
                              ":return: tangent vector at the start of the segment")
-      .def_property_readonly("tangent_segment_end", &geometry::Segment::tangentSegmentEnd,
+      .def_prop_ro("tangent_segment_end", &geometry::Segment::tangentSegmentEnd,
                              ":return: tangent vector at the end of the segment");
 
   // class CurvilinearCoordinateSystem()
-  py::class_<geometry::CurvilinearCoordinateSystem,
-             std::shared_ptr<geometry::CurvilinearCoordinateSystem>>(
-      m, "CurvilinearCoordinateSystem")
-      .def(py::init<const geometry::EigenPolyline &, double, double, double,  const std::string &, int>(),
-              py::arg("reference_path"),
-              py::arg("default_projection_domain_limit") = 20.0,
-              py::arg("eps") = 0.1,
-              py::arg("eps2") = 0.01,
-              py::arg("log_level") = "off",
-              py::arg("method") = 1,
+  nb::class_<geometry::CurvilinearCoordinateSystem>(
+      module, "CurvilinearCoordinateSystem")
+      .def(nb::init<const geometry::EigenPolyline &, double, double, double,  const std::string &, int>(),
+              "reference_path"_a,
+              "default_projection_domain_limit"_a = 20.0,
+              "eps"_a = 0.1,
+              "eps2"_a = 0.01,
+              "log_level"_a = "off",
+              "method"_a = 1,
           "Creates a curvilinear coordinate system aligned to the given reference path."
     "The unique projection domain along the reference path is automatically computed."
     "The absolute value of the lateral distance of the projection domain border from the reference path is"
@@ -255,11 +249,11 @@ void init_module_geometry(py::module &m) {
            "curvilinear coordinate system.\n\n:Returns: minimum curvature")
 
       .def("get_segment_list",
-           [](geometry::CurvilinearCoordinateSystem &cosy){
+           [](const geometry::CurvilinearCoordinateSystem &cosy){
                std::vector<geometry::Segment> vec_segment_copy;
                vec_segment_copy.reserve(cosy.getSegmentList().size());
                for (const auto &ptr : cosy.getSegmentList()) {
-                   vec_segment_copy.push_back(geometry::Segment(*ptr));
+                   vec_segment_copy.emplace_back(*ptr);
                }
                return vec_segment_copy;
             })
@@ -274,9 +268,9 @@ void init_module_geometry(py::module &m) {
 
       .def("convert_to_cartesian_coords",
            &geometry::CurvilinearCoordinateSystem::convertToCartesianCoords,
-           py::arg("s"),
-           py::arg("l"),
-           py::arg("check_proj_domain") = true,
+           "s"_a,
+           "l"_a,
+           "check_proj_domain"_a = true,
            "Transforms a point in the curvilinear coordinate frame to the "
            "global coordinate frame."
            "\n\n:param s: longitudinal coordinate"
@@ -292,17 +286,10 @@ void init_module_geometry(py::module &m) {
            "\n\n:param y: y-coordinate in the Cartesian coordinate system\n\n:Returns: True or False")
 
       .def("curvilinear_point_inside_projection_domain",
-           [](geometry::CurvilinearCoordinateSystem &cosy,
+           [](const geometry::CurvilinearCoordinateSystem &cosy,
               const double s, const double l){
-            std::tuple<bool, bool> ret_tuple = cosy.curvilinearPointInProjectionDomain(s, l);
-            bool ret_val{false};
-            if(std::get<0>(ret_tuple) && std::get<1>(ret_tuple)) {
-                ret_val = true;
-                return py::cast(ret_val);
-            } else {
-                ret_val = false;
-                return py::cast(ret_val);
-            }
+            const auto &[lon, lat] = cosy.curvilinearPointInProjectionDomain(s, l);
+            return lon && lat;
             },
            "Validates if a point in global coordinates is within the unique "
            "projection domain.\n\n:param x: x-coordinate in the Cartesian coordinate system"
@@ -318,9 +305,9 @@ void init_module_geometry(py::module &m) {
            "are inside the projection domain.")
 
       .def("determine_subsets_of_multi_polygons_within_projection_domain",
-           [](geometry::CurvilinearCoordinateSystem &cosy,
+           [](const geometry::CurvilinearCoordinateSystem &cosy,
               const std::vector<geometry::EigenPolyline> &polygons,
-              const std::vector<int> groups_of_polygons,
+              const std::vector<int> &groups_of_polygons,
               const int num_omp_threads) {
              std::vector<geometry::EigenPolyline> polygons_in_projection_domain;
              std::vector<int> groups_of_polygons_in_projection_domain;
@@ -328,10 +315,7 @@ void init_module_geometry(py::module &m) {
                  polygons, groups_of_polygons, num_omp_threads,
                  polygons_in_projection_domain,
                  groups_of_polygons_in_projection_domain);
-             py::tuple return_val(2);
-             return_val[0] = py::cast(polygons_in_projection_domain);
-             return_val[1] = py::cast(groups_of_polygons_in_projection_domain);
-             return return_val;
+             return std::make_tuple(polygons_in_projection_domain, groups_of_polygons_in_projection_domain);
            },
            "Intersects each of the input polygons with the projection domain "
            "and returns the result of the intersection.\n\n:param polygons: "
@@ -356,13 +340,10 @@ void init_module_geometry(py::module &m) {
            "curvilinear projection domain.")
 
       .def("convert_to_curvilinear_coords",
-           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y, bool check_proj_domain) {
-             Eigen::Vector2d curvilinear_coord = cosy.convertToCurvilinearCoords(x, y, check_proj_domain);
-             return py::cast(curvilinear_coord);
-           },
-           py::arg("x"),
-           py::arg("y"),
-           py::arg("check_proj_domain") = true,
+           nb::overload_cast<double, double, bool>(&geometry::CurvilinearCoordinateSystem::convertToCurvilinearCoords, nb::const_),
+           "x"_a,
+           "y"_a,
+           "check_proj_domain"_a = true,
            "Transforms a Cartesian point to the curvilinear frame."
            "\n\n:param x: x-coordinate in the Cartesian coordinate system"
            "\n\n:param y: y-coordinate in the Cartesian coordinate system"
@@ -371,21 +352,18 @@ void init_module_geometry(py::module &m) {
            "\n\n:return: point in curvilinear coordinates.")
 
       .def("convert_to_curvilinear_coords_and_get_segment_idx",
-           [](geometry::CurvilinearCoordinateSystem &cosy, double x, double y, bool check_proj_domain) {
+           [](const geometry::CurvilinearCoordinateSystem &cosy, double x, double y, bool check_proj_domain) {
              int idx = -1;
              Eigen::Vector2d tmp =
                  cosy.convertToCurvilinearCoordsAndGetSegmentIdx(x, y, idx, check_proj_domain);
-             std::vector<double> pos;
-             pos.push_back(tmp(0));
-             pos.push_back(tmp(1));
-             py::list out;
-             out.append(py::array(2, pos.data()));
+             nb::list out;
+             out.append(tmp);
              out.append(idx);
              return out;
            },
-           py::arg("x"),
-           py::arg("y"),
-           py::arg("check_proj_domain") = true,
+           "x"_a,
+           "y"_a,
+           "check_proj_domain"_a = true,
            "Transforms a Cartesian point to the curvilinear frame and returns "
            "the segment index, in which the point is contained."
            "\n\n:param x: x-coordinate in the Cartesian coordinate system"
@@ -393,9 +371,9 @@ void init_module_geometry(py::module &m) {
            "\n\n:return: list [point in curvilinear coordinates, associated segment index]")
 
       .def("convert_list_of_polygons_to_curvilinear_coords_and_rasterize",
-          [](geometry::CurvilinearCoordinateSystem &cosy,
+          [](const geometry::CurvilinearCoordinateSystem &cosy,
              const std::vector<geometry::EigenPolyline> &polygons,
-             const std::vector<int> groups_of_polygons, int num_polygon_groups,
+             const std::vector<int> &groups_of_polygons, int num_polygon_groups,
              int num_omp_threads) {
             std::vector<std::vector<geometry::EigenPolyline>> transformed_polygon;
             std::vector<std::vector<geometry::EigenPolyline>> transformed_polygon_rasterized;
@@ -405,10 +383,7 @@ void init_module_geometry(py::module &m) {
                 num_omp_threads, transformed_polygon,
                 transformed_polygon_rasterized);
 
-            py::tuple return_val(2);
-            return_val[0] = py::cast(transformed_polygon);
-            return_val[1] = py::cast(transformed_polygon_rasterized);
-            return return_val;
+            return std::make_tuple(transformed_polygon, transformed_polygon_rasterized);
           },
           "Transforms polygons in the Cartesian coordinates to the curvilinear "
           "coordinates.\n\n:param polygons: list of input polygons\n\n:param "
@@ -421,7 +396,7 @@ void init_module_geometry(py::module &m) {
           "group")
 
       .def("convert_polygon_to_curvilinear_coords",
-           [](geometry::CurvilinearCoordinateSystem &cosy,
+           [](const geometry::CurvilinearCoordinateSystem &cosy,
               const geometry::EigenPolyline &polygon) {
              // create output polygon
              std::vector<geometry::EigenPolyline> transformed_polygon;
@@ -430,22 +405,19 @@ void init_module_geometry(py::module &m) {
              cosy.convertPolygonToCurvilinearCoords(polygon, transformed_polygon);
 
              // return
-             return py::cast(transformed_polygon);
+             return transformed_polygon;
            },
            "Transforms a polygon to the curvilinear coordinate system.")
 
       .def("convert_rectangle_to_cartesian_coords",
-           [](geometry::CurvilinearCoordinateSystem &cosy, double s_lo,
+           [](const geometry::CurvilinearCoordinateSystem &cosy, double s_lo,
               double s_hi, double l_lo, double l_hi) {
              std::vector<geometry::EigenPolyline> triangle_mesh;
              geometry::EigenPolyline transformed_rectangle =
                  cosy.convertRectangleToCartesianCoords(s_lo, s_hi, l_lo, l_hi,
                                                         triangle_mesh);
 
-             py::tuple return_val(2);
-             return_val[0] = py::cast(transformed_rectangle);
-             return_val[1] = py::cast(triangle_mesh);
-             return return_val;
+             return std::make_tuple(transformed_rectangle, triangle_mesh);
            },
            "Transforms a rectangle in the curvilinear coordinates to the "
            "Cartesian coordinates. Additionally, a triangle mesh of the "
@@ -472,49 +444,34 @@ void init_module_geometry(py::module &m) {
            "\n\n:param num_omp_threads: number of OMP threads for computation"
            "\n\n:return: transformed points")
 
-      .def("compute_and_set_curvature", [](geometry::CurvilinearCoordinateSystem &cosy, const int digits){
-               return cosy.computeAndSetCurvature(digits);
-           },
-           py::arg("digits") = 8,
+      .def("compute_and_set_curvature", &geometry::CurvilinearCoordinateSystem::computeAndSetCurvature,
+           "digits"_a = 8,
            "Automatically computes and sets the curvature information for the "
            "reference path."
            "\n\n:param digits:  no. of decimal points for curvature value (default 8)")
 
 #if ENABLE_SERIALIZER
-      .def(py::pickle(
-          [](const geometry::CurvilinearCoordinateSystem
-                 &obj) {  // __getstate__
-            /* Return a tuple that fully encodes the state of the object */
-            py::list ret;
-            std::string dumped_obj;
+      .def("__getstate__",
+          [](const geometry::CurvilinearCoordinateSystem &obj) -> std::string {
+            // Return a string that fully encodes the state of the object
             std::ostringstream obj_dump;
             obj.serialize(obj_dump);
-            dumped_obj = obj_dump.str();
-            ret.append(py::cast(dumped_obj));
-            return py::make_tuple(ret);
-          },
-          [](py::tuple t) {  // __setstate__
-                             /* Create a new C++ instance */
-            std::string str_in;
-            if (t.size() != 1)
-              throw std::invalid_argument("pickle error - invalid input");
-            py::list list_in;
-            list_in = py::object(t[0]);
-            if (list_in.size() != 1)
-              throw std::invalid_argument("pickle error - invalid input");
-            str_in = list_in[0].cast<std::string>();
+            return obj_dump.str();
+          })
+      .def("__setstate__",
+          [](geometry::CurvilinearCoordinateSystem &obj, const std::string &str_in) {
+            // Create a new C++ instance
             std::istringstream stream_in(str_in);
-            geometry::CurvilinearCoordinateSystemConstPtr c =
-                geometry::CurvilinearCoordinateSystem::deserialize(stream_in);
-            if (c.get() == 0) {
+            auto clcs = std::const_pointer_cast<
+                        geometry::CurvilinearCoordinateSystem>(geometry::CurvilinearCoordinateSystem::deserialize(stream_in));
+            if (clcs == nullptr) {
               throw std::invalid_argument("pickle error - invalid input");
-            } else {
-              geometry::CurvilinearCoordinateSystemPtr res =
-                  std::const_pointer_cast<
-                      geometry::CurvilinearCoordinateSystem>(c);
-              return res;
             }
-          }))
+            // We can safely move the data out of the shared_ptr, since no one else has access to it
+            new (&obj) geometry::CurvilinearCoordinateSystem(std::move(*clcs));
+            // reset the shared_ptr to avoid dangling references
+            clcs.reset();
+          })
 
 #endif
       ;
