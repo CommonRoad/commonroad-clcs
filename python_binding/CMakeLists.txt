@@ -49,7 +49,7 @@ if (SKBUILD)
             ${CMAKE_CURRENT_BINARY_DIR}/${python_module_name}.pyi
             ${CMAKE_CURRENT_BINARY_DIR}/py.typed
             DESTINATION ${install_destination}
-            COMPONENT PythonModules
+            COMPONENT ${python_module_name}
     )
 
     # Sanity check: Ensure we are building all dependencies as static libraries
