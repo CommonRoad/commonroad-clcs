@@ -179,6 +179,24 @@ class TestCLCSUtil(unittest.TestCase):
                          msg='Polylines should be equally resampled')
         assert np.allclose(returned_orientation, self.orientation)
 
+    def test_curvature_radius_from_curvature(self):
+        """Test curvature radius computation"""
+        # curvature array from test data
+        curvature_radius = clcs_util.curvature_radius_from_curvature(self.curvature)
+        # check valid radius values
+        assert np.all(curvature_radius >= 0.0)
+        assert np.all(np.isfinite(curvature_radius))
+
+        # curvature array from straight line
+        x_coords = np.linspace(0, 5, num=11)
+        y_coords = np.zeros(11)
+        polyline_straight = np.column_stack((x_coords, y_coords))
+        curvature_arr_straight = clcs_util.compute_curvature_from_polyline(polyline_straight)
+        curvature_radius_straight = clcs_util.curvature_radius_from_curvature(curvature_arr_straight)
+        # check valid radius values
+        assert np.all(curvature_radius_straight >= 0.0)
+        assert np.all(np.isfinite(curvature_radius_straight))
+
     def test_resample_polyline_python(self):
         """Test own python method for polyline resampling"""
         self.assertGreaterEqual(self.number_of_samples, 2,
