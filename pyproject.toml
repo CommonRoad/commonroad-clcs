@@ -2,7 +2,7 @@
 name = "commonroad-clcs"
 version = "2025.2.0"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10"
 license = { file = "LICENSE.txt" }
 authors = [
     { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
