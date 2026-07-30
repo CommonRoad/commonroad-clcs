@@ -130,7 +130,7 @@ build-wheel:
     matrix:
       - PYTHON_VERSION: *python-versions
   script:
-    - python$PYTHON_VERSION -m pip wheel -v -w built_wheel dist/*.tar.gz
+    - python$PYTHON_VERSION -m pip wheel --no-deps -v -w built_wheel dist/*.tar.gz
     - auditwheel repair -w wheelhouse built_wheel/commonroad_clcs-*.whl
   needs:
     - job: build-sdist
