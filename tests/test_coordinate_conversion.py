@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 import unittest
 
@@ -107,13 +108,16 @@ class TestListOfPointsConversion(unittest.TestCase):
     Test class for conversion functions for list of points
     """
     def setUp(self):
+        # get path of test directory
+        file_dir_path = os.path.dirname(os.path.realpath(__file__))
+
         # load reference path
-        with open("./test_data/reference_path_b.pic", "rb") as f:
+        with open(os.path.join(file_dir_path, "test_data/reference_path_b.pic"), "rb") as f:
             data_set = pickle.load(f)
         self.reference_path = data_set['reference_path']
 
         # load points
-        with open("./test_data/segment_coordinate_system_reference_path_b_points_a.pic", "rb") as f:
+        with open(os.path.join(file_dir_path, "test_data/segment_coordinate_system_reference_path_b_points_a.pic"), "rb") as f:
             data_set = pickle.load(f)
         self.x = data_set['x']
         self.y = data_set['y']
