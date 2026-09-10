@@ -199,7 +199,7 @@ build-wheel-cibw:
 .test-setup:
   &test-setup
   stage: test
-  image: python:${PYTHON_VERSION}-slim-bullseye
+  image: python:${PYTHON_VERSION}-slim-trixie
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends git
     # install requirements and package separately to make sure that the package is installed from the wheel and not from PyPI
@@ -326,7 +326,7 @@ push-to-external-pypi-registry:
 # build the documentation (Doxygen + mkdocs)
 build-mkdocs:
   stage: publish-doc
-  image: python:${PYTHON_VERSION}-slim-bullseye
+  image: python:${PYTHON_VERSION}-slim-trixie
   variables:
     PYTHON_VERSION: *default-python-version
   before_script:
