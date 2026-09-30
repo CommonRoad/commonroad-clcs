@@ -2,7 +2,7 @@
 name = "commonroad-clcs"
 version = "2025.2.0"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10"
 license = { file = "LICENSE.txt" }
 authors = [
     { name = "Cyber-Physical Systems Group - Technical University of Munich", email = "commonroad@lists.lrz.de" }
@@ -41,7 +41,12 @@ Homepage = "https://commonroad.in.tum.de/tools/commonroad-clcs"
 Documentation = "https://commonroad.in.tum.de/docs/commonroad-clcs/"
 Source = "https://github.com/CommonRoad/commonroad-curvilinear-coordinate-system"
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    { include-group = "docs" },
+    { include-group = "build" },
+]
 test = [
     "pytest>=3.8.0",
     "parameterized~=0.9.0",
@@ -55,9 +60,6 @@ docs = [
 build = [
     "scikit-build-core~=0.11.0",
     "nanobind~=2.2.0",
-    "pathspec>=0.12.1",
-    "pyproject-metadata>=0.7.1",
-    "typing_extensions~=4.12.2",
     "cmake (>=3.24, <4.0)",
 ]
 
@@ -65,13 +67,11 @@ build = [
 requires = [
     "scikit-build-core~=0.11.0",
     "nanobind~=2.2.0",
-    "typing_extensions~=4.12.2",
     "cmake (>=3.24, <4.0)",
 ]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-wheel.packages = ["commonroad_clcs"]
 build-dir = "build/{build_type}_{wheel_tag}"
 install.components = ["pycrccosy"]
 
@@ -90,6 +90,5 @@ build-verbosity = 1
 
 # Skip tests on musllinux due to missing wheels
 test-skip = "*i686 *-musllinux*"
-test-extras = ["test"]
-# use --import-mode=append to test the installed package and not the source
-test-command = "python -m pytest {package}/tests --import-mode append"
+test-groups = ["test"]
+test-command = "pytest ./tests"

@@ -39,37 +39,79 @@ We use scikit-build-core to build the C++ code via pip
 
 
 ## Editable Installation
-1. Install the aformenetioned C++ dependencies. 
+
+### With `uv`
+
+1. Install the aforementioned C++ dependencies.
+
+2. Install the package without build isolation
+
+```bash
+uv sync -v --no-build-isolation-package commonroad-clcs --config-settings-package commonroad-clcs:editable.rebuild=true
+```
+
+Sometimes, it can be necessary to force a reinstallation of the package:
+
+```bash
+uv sync -v --no-build-isolation-package commonroad-clcs --config-settings-package commonroad-clcs:editable.rebuild=true --reinstall-package commonroad-clcs
+```
+
+
+### Without `uv`
+
+1. Install the aforementioned C++ dependencies.
 
 2. Install the Python build dependencies (required to make `--no-build-isolation` work in the next step):
+
 ```bash
-pip install -r requirements_build.txt
+pip install --group build
+```
+The `--group` option is only available with `pip>=25.1`.
+Otherwise, install the dependencies from the `build` group manually as listed in [`pyproject.toml`](../pyproject.toml).
+
+Also consider installing `ninja` to speed up the build process by parallelizing the compilation of C++ files:
+
+```bash
+pip install ninja
 ```
 
 3. Build the package and install it in editable mode with automatic rebuilds.
+
 ```bash
 pip install -v --no-build-isolation --config-settings=editable.rebuild=true -e .
 ```
 
-Please check the [scikit-build-core documentation](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs) for more details.
+Note that this is considered experimental by `scikit-build-core` and is subject to change.
+For more information, please see  the [documentation](https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#editable-installs) of `scikit-build-core`.
 
 Flags:
-- `-v` (verbose) output about the build progress
-- `--no-build-isolation` disables build isolation, build runs in your local environment
-- `--config-settings=editable.rebuild=true` enables automatic rebuilds when the source code changes
-- `-e` editable install 
 
+- `-v` (verbose) prints information about the build progress
+- `--no-build-isolation` disables build isolation, which means the build runs in your local environment
+- `--config-settings=editable.rebuild=true` enables automatic rebuilds when the source code changes
+- `-e` (editable) installs the package in editable mode
 
 ## Debugging the code
-1. Install in editable mode using the CMake Debug build flag:
+
+1. Install the package in editable mode using a Debug build:
+
+```bash
+uv sync -v --no-build-isolation-package commonroad-clcs --config-settings-package commonroad-clcs:editable.rebuild=true --config-settings-package commonroad-clcs:cmake.build-type="Debug"
+```
+
+Or, without `uv`:
+
 ```bash
 pip install -v --no-build-isolation --config-settings=editable.rebuild=true --config-settings=cmake.build-type="Debug" -e .
 ```
 
-2. Launch the Python interpreter together with a C++ debugger (e.g., GDB):
+2. Launch the Python interpreter under a C++ debugger, for example with GDB:
+
 ```bash
-gdb -ex r --args python compute_reachable_set.py
+gdb -ex r --args python example.py
 ```
+
+You can also use your favorite IDE to debug the C++ code.
 
 ## Building Python Bindings Directly
 
@@ -82,7 +124,7 @@ To do so, you need to add the following parameters to your CMake invocation.
 The first parameter enables the Python bindings for the CLCS.
 The second parameters adds the path to your Python installation's `site-packages` directory to the CMake search path like scikit-build-core does.
 If you are using an Anaconda/Miniconda environment, make sure to point this to the `site-packages` directory of the correct environment.
-Please make sure that `pybind11` with the version specified in the `build-system.requires` is installed in this environment.
+Please make sure that `nanobind` with the version specified in the `build-system.requires` is installed in this environment.
 
 
 ## Running Unit Tests

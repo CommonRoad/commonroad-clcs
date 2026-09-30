@@ -130,7 +130,7 @@ build-wheel:
     matrix:
       - PYTHON_VERSION: *python-versions
   script:
-    - python$PYTHON_VERSION -m pip wheel -v -w built_wheel dist/*.tar.gz
+    - python$PYTHON_VERSION -m pip wheel --no-deps -v -w built_wheel dist/*.tar.gz
     - auditwheel repair -w wheelhouse built_wheel/commonroad_clcs-*.whl
   needs:
     - job: build-sdist
@@ -199,15 +199,13 @@ build-wheel-cibw:
 .test-setup:
   &test-setup
   stage: test
-  image: python:${PYTHON_VERSION}-slim-bullseye
+  image: python:${PYTHON_VERSION}-slim-trixie
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends git
-    # use pip-tools to generate a requirements_test.txt (including test dependencies)
-    # we want to install the packages from the previously built wheel and not pull the PyPi packages
-    - pip install pip-tools
-    - pip-compile --extra=test -o requirements_test.txt pyproject.toml
-    - pip install -r requirements_test.txt
-    - pip install --no-index --find-links=wheelhouse/ commonroad-clcs[test]
+    # install requirements and package separately to make sure that the package is installed from the wheel and not from PyPI
+    - pip install uv
+    - uv sync --group test --no-default-groups --no-install-project
+    - uv pip install --no-index --no-deps --find-links=wheelhouse/ commonroad-clcs
   parallel:
     matrix:
       - PYTHON_VERSION: *python-versions
@@ -235,7 +233,7 @@ build-wheel-cibw:
   <<: *test-setup
   script:
     - cd tests
-    - pytest --import-mode append .
+    - uv run --no-sync pytest .
 
 run-pytest:
   <<: [ *pytest-setup, *source-manual ]
@@ -328,21 +326,18 @@ push-to-external-pypi-registry:
 # build the documentation (Doxygen + mkdocs)
 build-mkdocs:
   stage: publish-doc
-  image: python:${PYTHON_VERSION}-slim-bullseye
+  image: python:${PYTHON_VERSION}-slim-trixie
   variables:
     PYTHON_VERSION: *default-python-version
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends git doxygen
     - *update-git-config
+    - pip install uv
+    - uv sync --group docs --no-default-groups --no-install-project
+    - uv pip install --no-index --find-links=wheelhouse/ --no-deps commonroad-clcs
   script:
-    # use pip-tools to generate a temporary requirements_docs.txt (including docs dependencies)
-    - pip install pip-tools
-    - pip-compile --extra=docs -o requirements_docs.txt pyproject.toml
-    - pip install -r requirements_docs.txt
-    - pip install --no-index --find-links=wheelhouse/ commonroad-clcs[docs]
-    # build doc using mkdocs
-    - mkdocs build
+    - uv run --no-sync mkdocs build
   needs:
     - job: build-wheel
       artifacts: true

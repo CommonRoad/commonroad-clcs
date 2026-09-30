@@ -162,6 +162,17 @@ def compute_orientation_from_polyline(polyline: np.ndarray) -> np.ndarray:
     return np.array(orientation)
 
 
+def curvature_radius_from_curvature(curvature_array: np.ndarray, eps: float = 1e-8) -> np.ndarray:
+    """
+    Computes the corresponding curvature radius from the given curvature array.
+    Curvature values close to zero are corrected by precision value eps for numerical stability.
+    """
+    # correct curvature values close to zero
+    curv_arr_corrected = np.where(np.abs(curvature_array) < eps, eps, curvature_array)
+
+    return 1 / np.abs(curv_arr_corrected)
+
+
 def get_inflection_points(polyline: np.ndarray, digits: int = 4) -> Tuple[np.ndarray, List]:
     """
     Returns the inflection points (i.e., points where the sign of curvature changes) of a polyline
@@ -303,6 +314,8 @@ def resample_polyline_adaptive(
     # curvature array of polyline
     curvature_array = compute_curvature_from_polyline_python(polyline)
     max_curvature = np.max(curvature_array)
+    # curvature radius array of polyline
+    curvature_radius_array = curvature_radius_from_curvature(curvature_array)
 
     # proportionality factor between arc length distance and curvature radius at a point (if not given)
     _alpha = 1/(min_ds * max_curvature)
@@ -326,8 +339,7 @@ def resample_polyline_adaptive(
 
     # initialize for first point
     idx = 0
-    curvature_radius = 1 / abs(curvature_array[idx])
-    ds = min(max_ds,  1 / alpha * curvature_radius)
+    ds = min(max_ds,  1 / alpha * curvature_radius_array[idx])
     ds = max(ds, min_ds)
 
     while idx < len(x) - 1:
@@ -335,8 +347,7 @@ def resample_polyline_adaptive(
             # next idx of original polyline
             idx += 1
             # compute current ds based on local curvature of original polyline at current idx
-            curvature_radius = 1 / abs(curvature_array[idx])
-            ds = min(max_ds,  1 / alpha * curvature_radius)
+            ds = min(max_ds,  1 / alpha * curvature_radius_array[idx])
             ds = max(ds, min_ds)
         else:
             # new s coordinate
